@@ -4,16 +4,21 @@ import axiosInstance from "../api/axiosInstance";
 
 export default function UserDashboard() {
   const [memberships, setMemberships] = useState([]);
+  const [facilitySubscriptions, setFacilitySubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchMemberships = async () => {
       try {
-        const response = await axiosInstance.get("/user/memberships");
-        setMemberships(response.data || []);
+        const [membershipsRes, facilityRes] = await Promise.all([
+          axiosInstance.get("/user/memberships"),
+          axiosInstance.get("/user/facility/subscriptions")
+        ]);
+        setMemberships(membershipsRes.data || []);
+        setFacilitySubscriptions(facilityRes.data || []);
       } catch (err) {
-        setError("Failed to load memberships");
+        setError("Failed to load subscriptions");
       } finally {
         setLoading(false);
       }
@@ -82,13 +87,13 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {!loading && !error && memberships.length === 0 && (
+        {!loading && !error && memberships.length === 0 && facilitySubscriptions.length === 0 && (
           <div className="text-center py-16">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-12 max-w-md mx-auto">
               <div className="text-6xl mb-4">🏋️</div>
-              <h3 className="text-xl font-semibold mb-2">No memberships found</h3>
+              <h3 className="text-xl font-semibold mb-2">No subscriptions found</h3>
               <p className="text-zinc-400 mb-6">
-                You haven't joined any gym yet. Start your fitness journey today!
+                You haven't joined any gym or facility yet. Start your fitness journey today!
               </p>
               <Link
                 to="/gyms"
@@ -101,72 +106,139 @@ export default function UserDashboard() {
         )}
 
         {memberships.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {memberships.map((membership) => (
-              <div
-                key={membership.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-lime-400">
-                      {membership.gymName}
-                    </h3>
-                    <p className="text-zinc-300 text-sm mt-1">
-                      {membership.planName}
-                    </p>
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Gym Memberships</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {memberships.map((membership) => (
+                <div
+                  key={membership.id}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-lime-400">
+                        {membership.gymName}
+                      </h3>
+                      <p className="text-zinc-300 text-sm mt-1">
+                        {membership.planName}
+                      </p>
+                    </div>
+                    {getStatusBadge(membership.status)}
                   </div>
-                  {getStatusBadge(membership.status)}
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">Duration</span>
+                      <span className="font-medium">{membership.durationDays} days</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">Start Date</span>
+                      <span className="font-medium">{formatDate(membership.startDate)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">End Date</span>
+                      <span className="font-medium">{formatDate(membership.endDate)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
+                      <span className="text-zinc-400">Price Paid</span>
+                      <span className="font-bold text-lime-400">₹{membership.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <div className="flex gap-3">
+                      <Link
+                        to={`/user/gym/${membership.gymId}/visit`}
+                        className={`flex-1 px-4 py-2 rounded-xl font-semibold transition text-center ${
+                          membership.status === "ACTIVE"
+                            ? "bg-blue-500 text-white hover:bg-blue-400"
+                            : "bg-zinc-700 text-zinc-400 cursor-not-allowed pointer-events-none"
+                        }`}
+                      >
+                        Visit Gym
+                      </Link>
+                      <button
+                        disabled={membership.status === "EXPIRED"}
+                        className={`flex-1 px-4 py-2 rounded-xl font-semibold transition ${
+                          membership.status === "ACTIVE"
+                            ? "bg-lime-400 text-black hover:bg-lime-300"
+                            : "bg-zinc-700 text-zinc-400 cursor-not-allowed"
+                        }`}
+                      >
+                        {membership.status === "ACTIVE" ? "Active Membership" : "Membership Expired"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Duration</span>
-                    <span className="font-medium">{membership.durationDays} days</span>
+        {facilitySubscriptions.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Facility Subscriptions</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {facilitySubscriptions.map((subscription) => (
+                <div
+                  key={subscription.id}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-purple-400">
+                        {subscription.facilityName}
+                      </h3>
+                      <p className="text-zinc-300 text-sm mt-1">
+                        {subscription.gymName}
+                      </p>
+                      <p className="text-zinc-400 text-xs mt-1">
+                        {subscription.planName}
+                      </p>
+                    </div>
+                    {getStatusBadge(subscription.status)}
                   </div>
 
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Start Date</span>
-                    <span className="font-medium">{formatDate(membership.startDate)}</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">Duration</span>
+                      <span className="font-medium">{subscription.durationDays} days</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">Start Date</span>
+                      <span className="font-medium">{formatDate(subscription.startDate)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-400">End Date</span>
+                      <span className="font-medium">{formatDate(subscription.endDate)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
+                      <span className="text-zinc-400">Price Paid</span>
+                      <span className="font-bold text-purple-400">₹{subscription.price}</span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">End Date</span>
-                    <span className="font-medium">{formatDate(membership.endDate)}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                    <span className="text-zinc-400">Price Paid</span>
-                    <span className="font-bold text-lime-400">₹{membership.price}</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-white/10">
-                  <div className="flex gap-3">
-                    <Link
-                      to={`/user/gym/${membership.gymId}/visit`}
-                      className={`flex-1 px-4 py-2 rounded-xl font-semibold transition text-center ${
-                        membership.status === "ACTIVE"
-                          ? "bg-blue-500 text-white hover:bg-blue-400"
-                          : "bg-zinc-700 text-zinc-400 cursor-not-allowed pointer-events-none"
-                      }`}
-                    >
-                      Visit Gym
-                    </Link>
+                  <div className="mt-6 pt-4 border-t border-white/10">
                     <button
-                      disabled={membership.status === "EXPIRED"}
-                      className={`flex-1 px-4 py-2 rounded-xl font-semibold transition ${
-                        membership.status === "ACTIVE"
-                          ? "bg-lime-400 text-black hover:bg-lime-300"
+                      disabled={subscription.status === "EXPIRED"}
+                      className={`w-full px-4 py-2 rounded-xl font-semibold transition ${
+                        subscription.status === "ACTIVE"
+                          ? "bg-purple-500 text-white hover:bg-purple-400"
                           : "bg-zinc-700 text-zinc-400 cursor-not-allowed"
                       }`}
                     >
-                      {membership.status === "ACTIVE" ? "Active Membership" : "Membership Expired"}
+                      {subscription.status === "ACTIVE" ? "Active Subscription" : "Subscription Expired"}
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

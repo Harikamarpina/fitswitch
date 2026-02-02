@@ -88,6 +88,12 @@ export default function GymFacilities() {
                   >
                     Edit
                   </Link>
+                  <Link
+                    to={`/owner/facilities/${f.id}/plans`}
+                    className="px-4 py-2 text-sm rounded-xl bg-purple-500 hover:bg-purple-400 text-center"
+                  >
+                    Plans
+                  </Link>
                 </div>
               </div>
             ))}

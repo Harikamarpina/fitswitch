@@ -1,0 +1,96 @@
+import { useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
+
+export default function AddFacilityPlan() {
+  const { facilityId } = useParams();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    planName: "",
+    description: "",
+    durationDays: "",
+    price: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      await axiosInstance.post(`/owner/facilities/${facilityId}/plans`, {
+        ...form,
+        durationDays: Number(form.durationDays),
+        price: Number(form.price),
+      });
+      navigate(-1);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to add facility plan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white px-5 py-8">
+      <div className="max-w-2xl mx-auto">
+        <Link to={-1} className="underline text-zinc-200 hover:text-white">
+          ← Back
+        </Link>
+
+        <h1 className="text-2xl font-bold mt-4">Add Facility Plan</h1>
+        <p className="text-zinc-300 mt-2">Create a new subscription plan for this facility.</p>
+
+        {error && <p className="mt-4 text-red-400">{error}</p>}
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4"
+        >
+          <Input label="Plan Name" name="planName" value={form.planName} onChange={handleChange} required />
+          <div>
+            <label className="text-sm text-zinc-300">Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:outline-none focus:ring-2 focus:ring-lime-400 resize-none"
+              rows={3}
+            />
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input label="Duration (days)" name="durationDays" type="number" value={form.durationDays} onChange={handleChange} required />
+            <Input label="Price (₹)" name="price" type="number" value={form.price} onChange={handleChange} required />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-3 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300 transition disabled:opacity-60"
+          >
+            {loading ? "Saving..." : "Save Facility Plan"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Input({ label, ...props }) {
+  return (
+    <div>
+      <label className="text-sm text-zinc-300">{label}</label>
+      <input
+        {...props}
+        className="mt-1 w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:outline-none focus:ring-2 focus:ring-lime-400"
+      />
+    </div>
+  );
+}
