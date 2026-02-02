@@ -11,6 +11,10 @@ import GymDetails from "./pages/GymDetails";
 import PurchasePlan from "./pages/PurchasePlan";
 import UserDashboard from "./pages/UserDashboard";
 import UserGymVisit from "./pages/UserGymVisit";
+import FacilityPlans from "./pages/FacilityPlans";
+import PurchaseFacilityPlan from "./pages/PurchaseFacilityPlan";
+import OwnerFacilityPlans from "./pages/OwnerFacilityPlans";
+import AddFacilityPlan from "./pages/AddFacilityPlan";
 import OwnerMyGyms from "./pages/OwnerMyGyms";
 import OwnerAddGym from "./pages/OwnerAddGym";
 import OwnerEditGym from "./pages/OwnerEditGym";
@@ -60,6 +64,24 @@ export default function App() {
           element={
             <ProtectedRoute>
               <UserGymVisit />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/gyms/:gymId/facilities/:facilityId/plans" element={<FacilityPlans />} />
+        <Route path="/purchase-facility-plan" element={<PurchaseFacilityPlan />} />
+        <Route
+          path="/owner/facilities/:facilityId/plans"
+          element={
+            <ProtectedRoute>
+              <OwnerFacilityPlans />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner/facilities/:facilityId/plans/add"
+          element={
+            <ProtectedRoute>
+              <AddFacilityPlan />
             </ProtectedRoute>
           }
         />

@@ -95,10 +95,20 @@ export default function GymDetails() {
             <div className="grid md:grid-cols-2 gap-4">
               {facilities.map((facility) => (
                 <div key={facility.id} className="p-4 rounded-xl bg-black/30 border border-white/10">
-                  <h3 className="font-semibold">{facility.facilityName}</h3>
-                  {facility.description && (
-                    <p className="text-zinc-300 text-sm mt-1">{facility.description}</p>
-                  )}
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{facility.facilityName}</h3>
+                      {facility.description && (
+                        <p className="text-zinc-300 text-sm mt-1">{facility.description}</p>
+                      )}
+                    </div>
+                    <Link
+                      to={`/gyms/${gymId}/facilities/${facility.id}/plans`}
+                      className="ml-4 px-3 py-1 text-xs rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
+                    >
+                      View Plans
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
