@@ -7,6 +7,7 @@ public class GymFacilityResponse {
     private String facilityName;
     private String description;
     private boolean active;
+    private boolean hasPlans;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -23,4 +24,7 @@ public class GymFacilityResponse {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public boolean isHasPlans() { return hasPlans; }
+    public void setHasPlans(boolean hasPlans) { this.hasPlans = hasPlans; }
 }

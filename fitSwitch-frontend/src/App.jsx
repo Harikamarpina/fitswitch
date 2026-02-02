@@ -24,6 +24,9 @@ import OwnerEditFacility from "./pages/OwnerEditFacility";
 import GymPlan from "./pages/GymPlan";
 import AddGymPlan from "./pages/AddGymPlan";
 import EditGymPlan from "./pages/EditGymPlan";
+import OwnerGymUsers from "./pages/OwnerGymUsers";
+import OwnerUserStats from "./pages/OwnerUserStats";
+import PlanUsers from "./pages/PlanUsers";
 
 
 
@@ -163,6 +166,34 @@ export default function App() {
     element={
       <ProtectedRoute>
         <EditGymPlan />
+      </ProtectedRoute>
+    }
+  />
+
+  {/* Owner User Management Routes */}
+  <Route
+    path="/owner/gyms/:gymId/users"
+    element={
+      <ProtectedRoute>
+        <OwnerGymUsers />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/owner/gyms/:gymId/users/:userId/stats"
+    element={
+      <ProtectedRoute>
+        <OwnerUserStats />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/owner/facilities/:facilityId/plans/:planId/users"
+    element={
+      <ProtectedRoute>
+        <PlanUsers />
       </ProtectedRoute>
     }
   />

@@ -1,54 +1,44 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
+import { getUserDashboardStats } from "../api/statsApi";
+import UserSessionCard from "./UserSessionCard";
+import FacilitySessionCard from "./FacilitySessionCard";
 
 export default function UserDashboard() {
   const [memberships, setMemberships] = useState([]);
   const [facilitySubscriptions, setFacilitySubscriptions] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeSessions, setActiveSessions] = useState({});
 
   useEffect(() => {
-    const fetchMemberships = async () => {
+    const fetchData = async () => {
       try {
-        const [membershipsRes, facilityRes] = await Promise.all([
+        const [membershipsRes, facilityRes, statsRes] = await Promise.all([
           axiosInstance.get("/user/memberships"),
-          axiosInstance.get("/user/facility/subscriptions")
+          axiosInstance.get("/user/facility/subscriptions"),
+          getUserDashboardStats()
         ]);
         setMemberships(membershipsRes.data || []);
         setFacilitySubscriptions(facilityRes.data || []);
+        setDashboardStats(statsRes.data);
       } catch (err) {
-        setError("Failed to load subscriptions");
+        setError("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMemberships();
+    fetchData();
   }, []);
 
-  const getStatusBadge = (status) => {
-    if (status === "ACTIVE") {
-      return (
-        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-          ACTIVE
-        </span>
-      );
-    } else {
-      return (
-        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-          EXPIRED
-        </span>
-      );
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    });
+  const handleSessionUpdate = (gymId, sessionData) => {
+    setActiveSessions(prev => ({
+      ...prev,
+      [gymId]: sessionData
+    }));
   };
 
   if (loading) {
@@ -81,6 +71,82 @@ export default function UserDashboard() {
           </Link>
         </div>
 
+        {/* Dashboard Stats Cards */}
+        {dashboardStats && (
+          <div className="grid md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="text-2xl mb-2">📅</div>
+              <div className="text-2xl font-bold text-lime-400">{dashboardStats.totalVisitDays}</div>
+              <div className="text-sm text-zinc-300">Total Visit Days</div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="text-2xl mb-2">🏋️</div>
+              <div className="text-lg font-bold text-lime-400">{dashboardStats.activeMemberships?.length || 0}</div>
+              <div className="text-sm text-zinc-300">Active Memberships</div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="text-2xl mb-2">🏃</div>
+              <div className="text-lg font-bold text-purple-400">{dashboardStats.activeFacilitySubscriptions?.length || 0}</div>
+              <div className="text-sm text-zinc-300">Facility Subscriptions</div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="text-2xl mb-2">{dashboardStats.currentSessionStatus === "ACTIVE" ? "🟢" : "⚫"}</div>
+              <div className="text-lg font-bold">
+                <span className={dashboardStats.currentSessionStatus === "ACTIVE" ? "text-green-400" : "text-zinc-400"}>
+                  {dashboardStats.currentSessionStatus === "ACTIVE" ? "In Session" : "Not Active"}
+                </span>
+              </div>
+              <div className="text-sm text-zinc-300">Current Status</div>
+            </div>
+          </div>
+        )}
+
+        {/* Last Visit & Expiry Info */}
+        {dashboardStats && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="text-2xl mr-2">🕒</span>
+                Last Visit
+              </h3>
+              <p className="text-zinc-300">
+                {dashboardStats.lastVisitDate 
+                  ? new Date(dashboardStats.lastVisitDate).toLocaleDateString("en-IN", {
+                      day: "2-digit", month: "short", year: "numeric"
+                    })
+                  : "No visits yet"
+                }
+              </p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="text-2xl mr-2">⏰</span>
+                Upcoming Expiries
+              </h3>
+              {dashboardStats.subscriptionExpiryDates?.length > 0 ? (
+                <div className="space-y-2">
+                  {dashboardStats.subscriptionExpiryDates.slice(0, 3).map((expiry, index) => (
+                    <div key={index} className="text-sm">
+                      <span className={`px-2 py-1 rounded text-xs mr-2 ${
+                        expiry.type === "Membership" ? "bg-lime-500/20 text-lime-400" : "bg-purple-500/20 text-purple-400"
+                      }`}>
+                        {expiry.type}
+                      </span>
+                      <span className="text-zinc-300">
+                        {new Date(expiry.expiryDate).toLocaleDateString("en-IN", {
+                          day: "2-digit", month: "short"
+                        })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-zinc-400 text-sm">No active subscriptions</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-lg">
             {error}
@@ -107,72 +173,14 @@ export default function UserDashboard() {
 
         {memberships.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Gym Memberships</h2>
+            <h2 className="text-2xl font-bold mb-6">Gym Memberships & Sessions</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {memberships.map((membership) => (
-                <div
+                <UserSessionCard
                   key={membership.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-lime-400">
-                        {membership.gymName}
-                      </h3>
-                      <p className="text-zinc-300 text-sm mt-1">
-                        {membership.planName}
-                      </p>
-                    </div>
-                    {getStatusBadge(membership.status)}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">Duration</span>
-                      <span className="font-medium">{membership.durationDays} days</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">Start Date</span>
-                      <span className="font-medium">{formatDate(membership.startDate)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">End Date</span>
-                      <span className="font-medium">{formatDate(membership.endDate)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                      <span className="text-zinc-400">Price Paid</span>
-                      <span className="font-bold text-lime-400">₹{membership.price}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-white/10">
-                    <div className="flex gap-3">
-                      <Link
-                        to={`/user/gym/${membership.gymId}/visit`}
-                        className={`flex-1 px-4 py-2 rounded-xl font-semibold transition text-center ${
-                          membership.status === "ACTIVE"
-                            ? "bg-blue-500 text-white hover:bg-blue-400"
-                            : "bg-zinc-700 text-zinc-400 cursor-not-allowed pointer-events-none"
-                        }`}
-                      >
-                        Visit Gym
-                      </Link>
-                      <button
-                        disabled={membership.status === "EXPIRED"}
-                        className={`flex-1 px-4 py-2 rounded-xl font-semibold transition ${
-                          membership.status === "ACTIVE"
-                            ? "bg-lime-400 text-black hover:bg-lime-300"
-                            : "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-                        }`}
-                      >
-                        {membership.status === "ACTIVE" ? "Active Membership" : "Membership Expired"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  membership={membership}
+                  onSessionUpdate={(sessionData) => handleSessionUpdate(membership.gymId, sessionData)}
+                />
               ))}
             </div>
           </div>
@@ -180,63 +188,14 @@ export default function UserDashboard() {
 
         {facilitySubscriptions.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Facility Subscriptions</h2>
+            <h2 className="text-2xl font-bold mb-6">Facility Subscriptions & Sessions</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {facilitySubscriptions.map((subscription) => (
-                <div
+                <FacilitySessionCard
                   key={subscription.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-purple-400">
-                        {subscription.facilityName}
-                      </h3>
-                      <p className="text-zinc-300 text-sm mt-1">
-                        {subscription.gymName}
-                      </p>
-                      <p className="text-zinc-400 text-xs mt-1">
-                        {subscription.planName}
-                      </p>
-                    </div>
-                    {getStatusBadge(subscription.status)}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">Duration</span>
-                      <span className="font-medium">{subscription.durationDays} days</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">Start Date</span>
-                      <span className="font-medium">{formatDate(subscription.startDate)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">End Date</span>
-                      <span className="font-medium">{formatDate(subscription.endDate)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                      <span className="text-zinc-400">Price Paid</span>
-                      <span className="font-bold text-purple-400">₹{subscription.price}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-white/10">
-                    <button
-                      disabled={subscription.status === "EXPIRED"}
-                      className={`w-full px-4 py-2 rounded-xl font-semibold transition ${
-                        subscription.status === "ACTIVE"
-                          ? "bg-purple-500 text-white hover:bg-purple-400"
-                          : "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-                      }`}
-                    >
-                      {subscription.status === "ACTIVE" ? "Active Subscription" : "Subscription Expired"}
-                    </button>
-                  </div>
-                </div>
+                  subscription={subscription}
+                  onSessionUpdate={(sessionData) => handleSessionUpdate(subscription.gymId, sessionData)}
+                />
               ))}
             </div>
           </div>

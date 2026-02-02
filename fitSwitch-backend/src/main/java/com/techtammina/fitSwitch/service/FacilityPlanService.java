@@ -75,6 +75,38 @@ public class FacilityPlanService {
                 .toList();
     }
 
+    public List<FacilityPlanResponse> getAllOwnerFacilityPlans(Long ownerId) {
+        // Get all gyms owned by the owner
+        List<Gym> ownerGyms = gymRepository.findByOwnerId(ownerId);
+        
+        return ownerGyms.stream()
+                .flatMap(gym -> {
+                    // Get all facilities for this gym
+                    List<GymFacility> facilities = gymFacilityRepository.findByGymId(gym.getId());
+                    
+                    return facilities.stream()
+                            .flatMap(facility -> {
+                                // Get all plans for this facility
+                                List<FacilityPlan> plans = facilityPlanRepository.findByFacilityId(facility.getId());
+                                return plans.stream().map(plan -> mapToResponse(plan, gym, facility));
+                            });
+                })
+                .toList();
+    }
+
+    public List<FacilityPlanResponse> getGymFacilityPlansGrouped(Long gymId) {
+        // Get all facilities for this gym that have active plans
+        List<GymFacility> facilities = gymFacilityRepository.findByGymIdAndActiveTrue(gymId);
+        Gym gym = gymRepository.findById(gymId).orElse(null);
+        
+        return facilities.stream()
+                .flatMap(facility -> {
+                    List<FacilityPlan> plans = facilityPlanRepository.findByFacilityIdAndActiveTrue(facility.getId());
+                    return plans.stream().map(plan -> mapToResponse(plan, gym, facility));
+                })
+                .toList();
+    }
+
     public List<FacilityPlanResponse> getPublicFacilityPlans(Long gymId, Long facilityId) {
         // Validate facility belongs to gym
         GymFacility facility = gymFacilityRepository.findById(facilityId)
