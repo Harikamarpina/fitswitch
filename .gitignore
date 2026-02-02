@@ -1,0 +1,13 @@
+# Backend
+fitSwitch-backend/target/
+
+# Frontend
+fitSwitch-frontend/node_modules/
+fitSwitch-frontend/build/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
