@@ -49,4 +49,7 @@ public interface UserFacilitySubscriptionRepository extends JpaRepository<UserFa
     @Query("UPDATE UserFacilitySubscription ufs SET ufs.status = :status WHERE ufs.id IN :subscriptionIds")
     void updateSubscriptionsToExpired(@Param("subscriptionIds") List<Long> subscriptionIds, 
                                      @Param("status") FacilitySubscriptionStatus status);
+    
+    List<UserFacilitySubscription> findByGymIdAndStatusAndEndDateBetween(
+            Long gymId, FacilitySubscriptionStatus status, LocalDate startDate, LocalDate endDate);
 }

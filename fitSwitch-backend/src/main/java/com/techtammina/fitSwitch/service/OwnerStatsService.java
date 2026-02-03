@@ -298,7 +298,49 @@ public class OwnerStatsService {
         LocalDate today = LocalDate.now();
         LocalDate sevenDaysFromNow = today.plusDays(7);
         
-        return membershipRepository.findExpiringSoonMembers(gymId, today, sevenDaysFromNow);
+        List<OwnerGymMemberResponse> expiringMembers = new ArrayList<>();
+        
+        // Get expiring gym memberships
+        List<OwnerGymMemberResponse> expiringGymMembers = membershipRepository.findExpiringSoonMembers(gymId, today, sevenDaysFromNow);
+        expiringMembers.addAll(expiringGymMembers);
+        
+        // Get expiring facility subscriptions
+        List<UserFacilitySubscription> expiringSubscriptions = facilitySubscriptionRepository
+                .findByGymIdAndStatusAndEndDateBetween(gymId, FacilitySubscriptionStatus.ACTIVE, today, sevenDaysFromNow);
+        
+        for (UserFacilitySubscription subscription : expiringSubscriptions) {
+            Optional<User> userOpt = userRepository.findById(subscription.getUserId());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                
+                // Check if user already has an expiring gym membership to avoid duplicates
+                boolean hasExpiringGymMembership = expiringGymMembers.stream()
+                        .anyMatch(member -> member.getUserId().equals(user.getId()));
+                
+                if (!hasExpiringGymMembership) {
+                    OwnerGymMemberResponse response = new OwnerGymMemberResponse();
+                    response.setUserId(user.getId());
+                    response.setUserName(user.getFullName());
+                    response.setEmail(user.getEmail());
+                    response.setStartDate(subscription.getStartDate());
+                    response.setEndDate(subscription.getEndDate());
+                    response.setStatus(subscription.getStatus().toString());
+                    response.setPlanType("FACILITY");
+                    
+                    // Get plan name
+                    facilityPlanRepository.findById(subscription.getFacilityPlanId())
+                            .ifPresent(plan -> response.setPlanName(plan.getPlanName()));
+                    
+                    // Get last visit date
+                    Optional<LocalDate> lastVisitDate = gymSessionRepository.findLastVisitDateByUserId(user.getId());
+                    response.setLastVisitDate(lastVisitDate.orElse(null));
+                    
+                    expiringMembers.add(response);
+                }
+            }
+        }
+        
+        return expiringMembers;
     }
 
     private void updateExpiredPlans(Long gymId) {
