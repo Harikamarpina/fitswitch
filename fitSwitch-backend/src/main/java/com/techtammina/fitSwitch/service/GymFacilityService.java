@@ -5,6 +5,7 @@ import com.techtammina.fitSwitch.dto.GymFacilityResponse;
 import com.techtammina.fitSwitch.dto.GymFacilityUpdateRequest;
 import com.techtammina.fitSwitch.entity.Gym;
 import com.techtammina.fitSwitch.entity.GymFacility;
+import com.techtammina.fitSwitch.repository.FacilityPlanRepository;
 import com.techtammina.fitSwitch.repository.GymFacilityRepository;
 import com.techtammina.fitSwitch.repository.GymRepository;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,12 @@ public class GymFacilityService {
 
     private final GymFacilityRepository facilityRepository;
     private final GymRepository gymRepository;
+    private final FacilityPlanRepository facilityPlanRepository;
 
-    public GymFacilityService(GymFacilityRepository facilityRepository, GymRepository gymRepository) {
+    public GymFacilityService(GymFacilityRepository facilityRepository, GymRepository gymRepository, FacilityPlanRepository facilityPlanRepository) {
         this.facilityRepository = facilityRepository;
         this.gymRepository = gymRepository;
+        this.facilityPlanRepository = facilityPlanRepository;
     }
 
     public GymFacilityResponse addFacility(Long ownerId, GymFacilityCreateRequest request) {
@@ -82,7 +85,7 @@ public class GymFacilityService {
     public List<GymFacilityResponse> getFacilitiesForGymPublic(Long gymId) {
         return facilityRepository.findByGymIdAndActiveTrue(gymId)
                 .stream()
-                .map(this::mapToResponse)
+                .map(this::mapToResponseWithPlans)
                 .toList();
     }
 
@@ -93,6 +96,13 @@ public class GymFacilityService {
         response.setFacilityName(facility.getFacilityName());
         response.setDescription(facility.getDescription());
         response.setActive(facility.isActive());
+        return response;
+    }
+
+    private GymFacilityResponse mapToResponseWithPlans(GymFacility facility) {
+        GymFacilityResponse response = mapToResponse(facility);
+        boolean hasPlans = !facilityPlanRepository.findByFacilityIdAndActiveTrue(facility.getId()).isEmpty();
+        response.setHasPlans(hasPlans);
         return response;
     }
 

@@ -15,4 +15,13 @@ public interface UserFacilitySubscriptionRepository extends JpaRepository<UserFa
 
     Optional<UserFacilitySubscription> findByUserIdAndFacilityIdAndStatus(
             Long userId, Long facilityId, FacilitySubscriptionStatus status);
+            
+    Optional<UserFacilitySubscription> findByUserIdAndGymIdAndStatus(
+            Long userId, Long gymId, FacilitySubscriptionStatus status);
+            
+    List<UserFacilitySubscription> findByUserIdAndStatus(Long userId, FacilitySubscriptionStatus status);
+    
+    List<UserFacilitySubscription> findByUserIdAndGymId(Long userId, Long gymId);
+    
+    List<UserFacilitySubscription> findByFacilityIdAndFacilityPlanId(Long facilityId, Long facilityPlanId);
 }

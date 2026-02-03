@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getGymDetails, getGymFacilities, getGymPlans } from "../api/publicGymApi";
+import { getGymFacilityPlans } from "../api/facilityApi";
 
 export default function GymDetails() {
   const { gymId } = useParams();
@@ -8,21 +9,24 @@ export default function GymDetails() {
   const [gym, setGym] = useState(null);
   const [facilities, setFacilities] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [facilityPlans, setFacilityPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchGymData = async () => {
       try {
-        const [gymRes, facilitiesRes, plansRes] = await Promise.all([
+        const [gymRes, facilitiesRes, plansRes, facilityPlansRes] = await Promise.all([
           getGymDetails(gymId),
           getGymFacilities(gymId),
-          getGymPlans(gymId)
+          getGymPlans(gymId),
+          getGymFacilityPlans(gymId)
         ]);
         
         setGym(gymRes.data);
         setFacilities(facilitiesRes.data || []);
         setPlans(plansRes.data || []);
+        setFacilityPlans(facilityPlansRes.data || []);
       } catch (err) {
         setError("Failed to load gym details");
       } finally {
@@ -102,12 +106,14 @@ export default function GymDetails() {
                         <p className="text-zinc-300 text-sm mt-1">{facility.description}</p>
                       )}
                     </div>
-                    <Link
-                      to={`/gyms/${gymId}/facilities/${facility.id}/plans`}
-                      className="ml-4 px-3 py-1 text-xs rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-                    >
-                      View Plans
-                    </Link>
+                    {facility.hasPlans && (
+                      <Link
+                        to={`/gyms/${gymId}/facilities/${facility.id}/plans`}
+                        className="ml-4 px-3 py-1 text-xs rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
+                      >
+                        View Plans
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}
@@ -116,7 +122,7 @@ export default function GymDetails() {
         </div>
 
         {/* Plans */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 mb-8">
           <h2 className="text-2xl font-bold mb-4">Membership Plans</h2>
           {plans.length === 0 ? (
             <p className="text-zinc-300">No plans available.</p>
@@ -141,6 +147,49 @@ export default function GymDetails() {
             </div>
           )}
         </div>
+
+        {/* Facility Add-On Plans */}
+        {facilityPlans.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+            <h2 className="text-2xl font-bold mb-4">Facility Add-On Plans</h2>
+            <p className="text-zinc-300 text-sm mb-6">Optional facility-specific plans to enhance your gym experience</p>
+            
+            {/* Group plans by facility */}
+            {Object.entries(
+              facilityPlans.reduce((acc, plan) => {
+                if (!acc[plan.facilityName]) {
+                  acc[plan.facilityName] = [];
+                }
+                acc[plan.facilityName].push(plan);
+                return acc;
+              }, {})
+            ).map(([facilityName, plans]) => (
+              <div key={facilityName} className="mb-6 last:mb-0">
+                <h3 className="text-lg font-semibold text-lime-400 mb-3">{facilityName}</h3>
+                <div className="grid md:grid-cols-2 gap-4 ml-4">
+                  {plans.map((plan) => (
+                    <div key={plan.id} className="p-4 rounded-xl bg-black/30 border border-white/10">
+                      <h4 className="font-semibold mb-2">{plan.planName}</h4>
+                      {plan.description && (
+                        <p className="text-zinc-300 text-sm mb-3">{plan.description}</p>
+                      )}
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-lime-400 font-bold">₹{plan.price}</span>
+                        <span className="text-zinc-300 text-sm">{plan.durationDays} days</span>
+                      </div>
+                      <Link
+                        to={`/gyms/${gymId}/facilities/${plan.facilityId}/plans`}
+                        className="block w-full px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition text-center"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

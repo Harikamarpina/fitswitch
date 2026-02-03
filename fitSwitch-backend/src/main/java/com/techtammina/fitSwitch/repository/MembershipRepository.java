@@ -14,4 +14,10 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     List<Membership> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     Optional<Membership> findByUserIdAndGymIdAndStatus(Long userId, Long gymId, MembershipStatus status);
+    
+    List<Membership> findByUserIdAndStatus(Long userId, MembershipStatus status);
+    
+    List<Membership> findByUserIdAndGymId(Long userId, Long gymId);
+    
+    List<Membership> findByGymIdAndPlanId(Long gymId, Long planId);
 }
