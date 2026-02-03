@@ -4,11 +4,11 @@ import com.techtammina.fitSwitch.dto.MembershipCreateRequest;
 import com.techtammina.fitSwitch.dto.MembershipResponse;
 import com.techtammina.fitSwitch.dto.UserMembershipResponse;
 import com.techtammina.fitSwitch.entity.*;
-import com.techtammina.fitSwitch.repository.GymPlanRepository;
-import com.techtammina.fitSwitch.repository.GymRepository;
-import com.techtammina.fitSwitch.repository.MembershipRepository;
+import com.techtammina.fitSwitch.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,15 +19,19 @@ public class MembershipService {
     private final MembershipRepository membershipRepository;
     private final GymRepository gymRepository;
     private final GymPlanRepository planRepository;
+    private final OwnerEarningRepository ownerEarningRepository;
 
     public MembershipService(MembershipRepository membershipRepository, 
                            GymRepository gymRepository, 
-                           GymPlanRepository planRepository) {
+                           GymPlanRepository planRepository,
+                           OwnerEarningRepository ownerEarningRepository) {
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
         this.planRepository = planRepository;
+        this.ownerEarningRepository = ownerEarningRepository;
     }
 
+    @Transactional
     public MembershipResponse createMembership(Long userId, MembershipCreateRequest request) {
         // Validate gym exists and is active
         Gym gym = gymRepository.findById(request.getGymId())
@@ -67,6 +71,19 @@ public class MembershipService {
         membership.setCreatedAt(LocalDateTime.now());
 
         Membership saved = membershipRepository.save(membership);
+        
+        // Record owner earning
+        OwnerEarning earning = new OwnerEarning();
+        earning.setOwnerId(gym.getOwnerId());
+        earning.setGymId(request.getGymId());
+        earning.setUserId(userId);
+        earning.setType(OwnerEarning.EarningType.MEMBERSHIP_PURCHASE);
+        earning.setAmount(plan.getPrice());
+        earning.setDescription("Membership purchase: " + plan.getPlanName());
+        earning.setMembershipId(saved.getId());
+        earning.setCreatedAt(LocalDateTime.now());
+        ownerEarningRepository.save(earning);
+        
         return mapToResponse(saved, gym, plan);
     }
 

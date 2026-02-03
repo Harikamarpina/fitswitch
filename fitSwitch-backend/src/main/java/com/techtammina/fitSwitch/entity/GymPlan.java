@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.techtammina.fitSwitch.enums.PassType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,7 +33,14 @@ public class GymPlan {
     private Integer durationDays; // ex: 30, 90, 365
 
     @Column(nullable = false)
+    private Integer durationMonths; // ex: 1, 3, 12
+
+    @Column(nullable = false)
     private BigDecimal price; // 999, 2499 etc.
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PassType passType = PassType.REGULAR;
 
     @Column(nullable = false)
     private boolean active = true;

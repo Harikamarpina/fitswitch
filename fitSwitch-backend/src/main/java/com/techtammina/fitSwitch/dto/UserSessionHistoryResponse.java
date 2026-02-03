@@ -26,6 +26,18 @@ public class UserSessionHistoryResponse {
         this.status = status;
         this.planType = planType;
     }
+    
+    public UserSessionHistoryResponse(Long id, String gymName, LocalDate visitDate, 
+                                    LocalDateTime checkInTime, LocalDateTime checkOutTime, 
+                                    String status) {
+        this.id = id;
+        this.gymName = gymName;
+        this.visitDate = visitDate;
+        this.checkInTime = checkInTime;
+        this.checkOutTime = checkOutTime;
+        this.status = status;
+        this.planType = "GYM";
+    }
 
     // Getters and Setters
     public Long getId() { return id; }

@@ -1,5 +1,7 @@
 package com.techtammina.fitSwitch.dto;
 
+import com.techtammina.fitSwitch.entity.MembershipStatus;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class UserMembershipHistoryResponse {
@@ -11,21 +13,23 @@ public class UserMembershipHistoryResponse {
     private LocalDate endDate;
     private String status;
     private Double price;
+    private Integer durationDays;
 
     // Constructors
     public UserMembershipHistoryResponse() {}
 
     public UserMembershipHistoryResponse(Long id, String gymName, String planName, 
-                                       LocalDate startDate, LocalDate startDate2, 
-                                       LocalDate endDate, String status, Double price) {
+                                       LocalDate startDate, LocalDate endDate, 
+                                       MembershipStatus status, BigDecimal price, Integer durationDays) {
         this.id = id;
         this.gymName = gymName;
         this.planName = planName;
-        this.purchaseDate = startDate; // Using startDate as purchaseDate
-        this.startDate = startDate2;
+        this.purchaseDate = startDate;
+        this.startDate = startDate;
         this.endDate = endDate;
-        this.status = status;
-        this.price = price;
+        this.status = status.toString();
+        this.price = price != null ? price.doubleValue() : null;
+        this.durationDays = durationDays;
     }
 
     // Getters and Setters
@@ -52,4 +56,7 @@ public class UserMembershipHistoryResponse {
 
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    
+    public Integer getDurationDays() { return durationDays; }
+    public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
 }

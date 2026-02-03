@@ -1,5 +1,7 @@
 package com.techtammina.fitSwitch.dto;
 
+import com.techtammina.fitSwitch.enums.PassType;
+
 public class GymPlanResponse {
     
     private Long id;
@@ -8,6 +10,8 @@ public class GymPlanResponse {
     private String description;
     private Double price;
     private Integer durationDays;
+    private Integer durationMonths;
+    private PassType passType;
     private boolean active;
 
     // Getters and Setters
@@ -28,6 +32,12 @@ public class GymPlanResponse {
 
     public Integer getDurationDays() { return durationDays; }
     public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
+
+    public Integer getDurationMonths() { return durationMonths; }
+    public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
+
+    public PassType getPassType() { return passType; }
+    public void setPassType(PassType passType) { this.passType = passType; }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

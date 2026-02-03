@@ -1,5 +1,6 @@
 package com.techtammina.fitSwitch.dto;
 
+import com.techtammina.fitSwitch.enums.PassType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,6 +21,12 @@ public class GymPlanCreateRequest {
 
     @NotNull(message = "Duration is required")
     private Integer durationDays;
+
+    @NotNull(message = "Duration in months is required")
+    private Integer durationMonths;
+
+    @NotNull(message = "Pass type is required")
+    private PassType passType = PassType.REGULAR;
 
     public Long getGymId() {
         return gymId;
@@ -59,5 +66,21 @@ public class GymPlanCreateRequest {
 
     public void setDurationDays(Integer durationDays) {
         this.durationDays = durationDays;
+    }
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
+    }
+
+    public PassType getPassType() {
+        return passType;
+    }
+
+    public void setPassType(PassType passType) {
+        this.passType = passType;
     }
 }

@@ -58,4 +58,15 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     @Query("UPDATE Membership m SET m.status = :status WHERE m.id IN :membershipIds")
     void updateMembershipsToExpired(@Param("membershipIds") List<Long> membershipIds, 
                                    @Param("status") MembershipStatus status);
+    
+    @Query("SELECT m.id FROM Membership m WHERE m.userId = :userId AND m.status = 'ACTIVE' AND m.endDate < :today")
+    List<Long> findExpiredMembershipIds(@Param("userId") Long userId, @Param("today") LocalDate today);
+    
+    @Query("SELECT new com.techtammina.fitSwitch.dto.UserMembershipHistoryResponse(" +
+           "m.id, g.gymName, gp.planName, m.startDate, m.endDate, m.status, gp.price, gp.durationDays) " +
+           "FROM Membership m " +
+           "JOIN Gym g ON m.gymId = g.id " +
+           "JOIN GymPlan gp ON m.planId = gp.id " +
+           "WHERE m.userId = :userId ORDER BY m.createdAt DESC")
+    List<UserMembershipHistoryResponse> findMembershipHistoryByUserId(@Param("userId") Long userId);
 }

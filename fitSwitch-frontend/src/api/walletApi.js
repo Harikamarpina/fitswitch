@@ -1,0 +1,68 @@
+import axiosInstance from './axiosInstance';
+
+// Get wallet balance
+export const getWalletBalance = async () => {
+  try {
+    const response = await axiosInstance.get('/wallet/balance');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Add money to wallet
+export const addMoney = async (amount) => {
+  try {
+    const response = await axiosInstance.post('/wallet/add-money', { amount });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Use facility with wallet
+export const useFacility = async (gymId, facilityId) => {
+  try {
+    const response = await axiosInstance.post('/wallet/use-facility', {
+      gymId,
+      facilityId
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Get wallet transaction history
+export const getTransactionHistory = async () => {
+  try {
+    const response = await axiosInstance.get('/wallet/transactions');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Digital card check-in
+export const digitalCardCheckIn = async (gymId, facilityId) => {
+  try {
+    const response = await axiosInstance.post(`/digital-card/checkin?gymId=${gymId}&facilityId=${facilityId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Switch membership
+export const switchMembership = async (currentMembershipId, newGymId, newPlanId) => {
+  try {
+    const response = await axiosInstance.post('/membership/switch', {
+      currentMembershipId,
+      newGymId,
+      newPlanId
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};

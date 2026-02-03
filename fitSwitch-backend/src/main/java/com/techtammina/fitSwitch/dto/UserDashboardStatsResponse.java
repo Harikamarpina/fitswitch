@@ -1,5 +1,6 @@
 package com.techtammina.fitSwitch.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,6 +12,7 @@ public class UserDashboardStatsResponse {
     private List<ActiveFacilitySubscriptionDto> activeFacilitySubscriptions;
     private List<SubscriptionExpiryDto> subscriptionExpiryDates;
     private String currentSessionStatus;
+    private BigDecimal walletBalance;
 
     // Getters and Setters
     public int getTotalVisitDays() { return totalVisitDays; }
@@ -30,6 +32,9 @@ public class UserDashboardStatsResponse {
 
     public String getCurrentSessionStatus() { return currentSessionStatus; }
     public void setCurrentSessionStatus(String currentSessionStatus) { this.currentSessionStatus = currentSessionStatus; }
+
+    public BigDecimal getWalletBalance() { return walletBalance; }
+    public void setWalletBalance(BigDecimal walletBalance) { this.walletBalance = walletBalance; }
 
     public static class ActiveMembershipDto {
         private String gymName;

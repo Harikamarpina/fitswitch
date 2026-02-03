@@ -63,17 +63,37 @@ export default function UserDashboard() {
             </p>
           </div>
 
-          <Link
-            to="/gyms"
-            className="px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-          >
-            Browse Gyms
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              to="/wallet"
+              className="px-4 py-2 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-400 transition"
+            >
+              My Wallet
+            </Link>
+            <Link
+              to="/digital-card"
+              className="px-4 py-2 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-400 transition"
+            >
+              Digital Card
+            </Link>
+            <Link
+              to="/membership/switch"
+              className="px-4 py-2 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-400 transition"
+            >
+              Switch Membership
+            </Link>
+            <Link
+              to="/gyms"
+              className="px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
+            >
+              Browse Gyms
+            </Link>
+          </div>
         </div>
 
         {/* Dashboard Stats Cards */}
         {dashboardStats && (
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <div className="grid md:grid-cols-5 gap-4 mb-8">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-2xl mb-2">📅</div>
               <div className="text-2xl font-bold text-lime-400">{dashboardStats.totalVisitDays}</div>
@@ -88,6 +108,11 @@ export default function UserDashboard() {
               <div className="text-2xl mb-2">🏃</div>
               <div className="text-lg font-bold text-purple-400">{dashboardStats.activeFacilitySubscriptions?.length || 0}</div>
               <div className="text-sm text-zinc-300">Facility Subscriptions</div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="text-2xl mb-2">💳</div>
+              <div className="text-lg font-bold text-green-400">₹{dashboardStats.walletBalance?.toFixed(2) || '0.00'}</div>
+              <div className="text-sm text-zinc-300">Wallet Balance</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-2xl mb-2">{dashboardStats.currentSessionStatus === "ACTIVE" ? "🟢" : "⚫"}</div>

@@ -76,7 +76,7 @@ export default function Dashboard() {
           {role === "OWNER" && (
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Gym Management</h2>
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <button
                   onClick={() => navigate("/owner/gyms")}
                   className="bg-lime-400 hover:bg-lime-300 text-black font-semibold px-6 py-4 rounded-xl transition text-left"
@@ -90,6 +90,20 @@ export default function Dashboard() {
                 >
                   <div className="text-lg font-bold">Add New Gym</div>
                   <div className="text-sm text-zinc-300">Create a new gym listing</div>
+                </button>
+                <button
+                  onClick={() => navigate("/owner/earnings")}
+                  className="bg-green-500 hover:bg-green-400 text-white font-semibold px-6 py-4 rounded-xl transition text-left"
+                >
+                  <div className="text-lg font-bold">My Earnings</div>
+                  <div className="text-sm opacity-80">View revenue and payments</div>
+                </button>
+                <button
+                  onClick={() => navigate("/owner/unsubscribe-requests")}
+                  className="bg-orange-500 hover:bg-orange-400 text-white font-semibold px-6 py-4 rounded-xl transition text-left"
+                >
+                  <div className="text-lg font-bold">Unsubscribe Requests</div>
+                  <div className="text-sm opacity-80">Manage member requests</div>
                 </button>
                 <button
                   onClick={() => {

@@ -42,4 +42,11 @@ public interface GymSessionRepository extends JpaRepository<GymSession, Long> {
            "WHERE g.gymId = :gymId AND g.visitDate = :today " +
            "ORDER BY g.checkInTime DESC")
     List<OwnerTodayVisitResponse> findTodayVisitsByGymId(@Param("gymId") Long gymId, @Param("today") LocalDate today);
+    
+    @Query("SELECT new com.techtammina.fitSwitch.dto.UserSessionHistoryResponse(" +
+           "g.id, gym.gymName, g.visitDate, g.checkInTime, g.checkOutTime, CAST(g.status AS string)) " +
+           "FROM GymSession g " +
+           "JOIN Gym gym ON g.gymId = gym.id " +
+           "WHERE g.userId = :userId ORDER BY g.visitDate DESC")
+    List<UserSessionHistoryResponse> findSessionHistoryByUserId(@Param("userId") Long userId);
 }
