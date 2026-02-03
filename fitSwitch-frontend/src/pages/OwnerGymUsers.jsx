@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getGymUsers } from "../api/statsApi";
+import { getGymPlans } from "../api/planApi";
+import { getGymPlanUsers } from "../api/facilityApi";
 
 export default function OwnerGymUsers() {
   const { gymId } = useParams();
@@ -15,10 +17,42 @@ export default function OwnerGymUsers() {
   const fetchGymUsers = async () => {
     try {
       setLoading(true);
+      setError("");
+      
+      // Try main endpoint first
       const response = await getGymUsers(gymId);
-      setUsers(response.data || []);
+      const userData = response?.data || [];
+      
+      if (Array.isArray(userData) && userData.length > 0) {
+        setUsers(userData);
+        return;
+      }
+      
+      // If empty, try to get users from gym plans
+      const plansResponse = await getGymPlans(gymId);
+      const plans = plansResponse?.data || [];
+      
+      let allUsers = [];
+      for (const plan of plans) {
+        try {
+          const planUsersResponse = await getGymPlanUsers(gymId, plan.id);
+          const planUsers = planUsersResponse?.data || [];
+          allUsers = allUsers.concat(planUsers);
+        } catch (err) {
+          console.warn(`Failed to fetch users for plan ${plan.id}`);
+        }
+      }
+      
+      // Remove duplicates
+      const uniqueUsers = allUsers.filter((user, index, self) => 
+        index === self.findIndex(u => u.userId === user.userId)
+      );
+      
+      setUsers(uniqueUsers);
     } catch (err) {
+      console.error('API Error:', err);
       setError("Failed to load gym users");
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -64,7 +98,7 @@ export default function OwnerGymUsers() {
           </div>
         )}
 
-        {users.length === 0 ? (
+        {!loading && users.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">👥</div>
             <h3 className="text-xl font-semibold mb-2">No users found</h3>

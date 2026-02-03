@@ -1,8 +1,6 @@
 package com.techtammina.fitSwitch.controller;
 
-import com.techtammina.fitSwitch.dto.GymUserResponse;
-import com.techtammina.fitSwitch.dto.OwnerUserStatsResponse;
-import com.techtammina.fitSwitch.dto.PlanUserResponse;
+import com.techtammina.fitSwitch.dto.*;
 import com.techtammina.fitSwitch.entity.User;
 import com.techtammina.fitSwitch.repository.UserRepository;
 import com.techtammina.fitSwitch.service.OwnerStatsService;
@@ -55,5 +53,21 @@ public class OwnerStatsController {
                                                      @PathVariable Long planId,
                                                      Authentication auth) {
         return ownerStatsService.getFacilityPlanUsers(getOwnerId(auth), facilityId, planId);
+    }
+
+    // New APIs for owner visibility
+    @GetMapping("/visits/today")
+    public List<OwnerTodayVisitResponse> getTodayVisits(@PathVariable Long gymId, Authentication auth) {
+        return ownerStatsService.getTodayVisits(getOwnerId(auth), gymId);
+    }
+
+    @GetMapping("/members")
+    public List<OwnerGymMemberResponse> getGymMembers(@PathVariable Long gymId, Authentication auth) {
+        return ownerStatsService.getGymMembers(getOwnerId(auth), gymId);
+    }
+
+    @GetMapping("/expiring-soon")
+    public List<OwnerGymMemberResponse> getExpiringSoon(@PathVariable Long gymId, Authentication auth) {
+        return ownerStatsService.getExpiringSoon(getOwnerId(auth), gymId);
     }
 }

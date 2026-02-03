@@ -1,5 +1,7 @@
 package com.techtammina.fitSwitch.repository;
 
+import com.techtammina.fitSwitch.dto.UserSessionHistoryResponse;
+import com.techtammina.fitSwitch.dto.OwnerTodayVisitResponse;
 import com.techtammina.fitSwitch.entity.GymSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -32,4 +34,12 @@ public interface GymSessionRepository extends JpaRepository<GymSession, Long> {
     
     @Query("SELECT DISTINCT g.userId FROM GymSession g WHERE g.gymId = :gymId")
     List<Long> findDistinctUserIdsByGymId(@Param("gymId") Long gymId);
+    
+    @Query("SELECT new com.techtammina.fitSwitch.dto.OwnerTodayVisitResponse(" +
+           "u.id, u.fullName, u.email, g.checkInTime, g.checkOutTime, CAST(g.status AS string)) " +
+           "FROM GymSession g " +
+           "JOIN User u ON g.userId = u.id " +
+           "WHERE g.gymId = :gymId AND g.visitDate = :today " +
+           "ORDER BY g.checkInTime DESC")
+    List<OwnerTodayVisitResponse> findTodayVisitsByGymId(@Param("gymId") Long gymId, @Param("today") LocalDate today);
 }

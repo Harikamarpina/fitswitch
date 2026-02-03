@@ -1,17 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { checkInToGym, checkOutFromGym } from "../api/sessionApi";
+import { getAllGyms } from "../api/gymApi";
 
-export default function UserSessionCard({ membership, onSessionUpdate }) {
+export default function UserSessionCard({ membership, onSessionUpdate, dashboardStats }) {
   const [loading, setLoading] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [error, setError] = useState("");
+  const [gymId, setGymId] = useState(null);
+
+  useEffect(() => {
+    // Get gym ID by matching gym name
+    const fetchGymId = async () => {
+      try {
+        const response = await getAllGyms();
+        const gyms = response.data || [];
+        const gym = gyms.find(g => g.name === membership.gymName || g.gymName === membership.gymName);
+        
+        if (gym) {
+          setGymId(gym.id);
+        } else {
+          setGymId(1); // Fallback
+        }
+      } catch (err) {
+        setGymId(1); // Fallback
+      }
+    };
+    
+    if (membership.gymId || membership.gym_id) {
+      setGymId(membership.gymId || membership.gym_id);
+    } else {
+      fetchGymId();
+    }
+  }, [membership]);
+
+  useEffect(() => {
+    // Set active session based on dashboard stats
+    if (dashboardStats?.currentSessionStatus === "ACTIVE") {
+      setActiveSession({ status: "ACTIVE", checkInTime: new Date() });
+    } else {
+      setActiveSession(null);
+    }
+  }, [dashboardStats]);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const response = await checkInToGym(membership.gymId);
+      if (!gymId) {
+        setError("Unable to determine gym ID. Please try again.");
+        return;
+      }
+      
+      const response = await checkInToGym(gymId);
       setActiveSession(response.data);
       
       if (onSessionUpdate) {

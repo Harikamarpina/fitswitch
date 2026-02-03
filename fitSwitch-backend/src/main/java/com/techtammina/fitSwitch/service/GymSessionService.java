@@ -42,6 +42,9 @@ public class GymSessionService {
             throw new RuntimeException("You already have an active session for this gym today");
         }
 
+        // Update expired memberships and subscriptions before validation
+        updateExpiredPlans(userId, today);
+
         // Validate user has active membership or facility subscription
         Long membershipId = null;
         Long facilitySubscriptionId = null;
@@ -111,5 +114,19 @@ public class GymSessionService {
             .ifPresent(gym -> response.setGymName(gym.getGymName()));
         
         return response;
+    }
+
+    private void updateExpiredPlans(Long userId, LocalDate today) {
+        // Update expired memberships
+        java.util.List<Long> expiredMembershipIds = membershipRepository.findExpiredMembershipIds(userId, today);
+        if (!expiredMembershipIds.isEmpty()) {
+            membershipRepository.updateMembershipsToExpired(expiredMembershipIds, MembershipStatus.EXPIRED);
+        }
+        
+        // Update expired facility subscriptions
+        java.util.List<Long> expiredSubscriptionIds = facilitySubscriptionRepository.findExpiredSubscriptionIds(userId, today);
+        if (!expiredSubscriptionIds.isEmpty()) {
+            facilitySubscriptionRepository.updateSubscriptionsToExpired(expiredSubscriptionIds, FacilitySubscriptionStatus.EXPIRED);
+        }
     }
 }
