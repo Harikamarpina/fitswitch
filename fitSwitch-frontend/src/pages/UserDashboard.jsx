@@ -179,6 +179,7 @@ export default function UserDashboard() {
                 <UserSessionCard
                   key={membership.id}
                   membership={membership}
+                  dashboardStats={dashboardStats}
                   onSessionUpdate={(sessionData) => handleSessionUpdate(membership.gymId, sessionData)}
                 />
               ))}
@@ -194,6 +195,7 @@ export default function UserDashboard() {
                 <FacilitySessionCard
                   key={subscription.id}
                   subscription={subscription}
+                  dashboardStats={dashboardStats}
                   onSessionUpdate={(sessionData) => handleSessionUpdate(subscription.gymId, sessionData)}
                 />
               ))}

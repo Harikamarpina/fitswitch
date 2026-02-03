@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getAllOwnerFacilityPlans } from "../api/facilityApi";
+import { getOwnerGyms } from "../api/gymApi";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [facilityPlans, setFacilityPlans] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [ownerGyms, setOwnerGyms] = useState([]);
+  const [loadingOwnerGyms, setLoadingOwnerGyms] = useState(false);
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
@@ -13,19 +13,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (role === "OWNER") {
-      fetchFacilityPlans();
+      fetchOwnerGyms();
     }
   }, [role]);
 
-  const fetchFacilityPlans = async () => {
+  const fetchOwnerGyms = async () => {
     try {
-      setLoadingPlans(true);
-      const response = await getAllOwnerFacilityPlans();
-      setFacilityPlans(response.data || []);
+      setLoadingOwnerGyms(true);
+      const response = await getOwnerGyms();
+      setOwnerGyms(response.data || []);
     } catch (error) {
-      console.error("Failed to fetch facility plans:", error);
+      console.error("Failed to fetch owner gyms:", error);
     } finally {
-      setLoadingPlans(false);
+      setLoadingOwnerGyms(false);
     }
   };
 
@@ -92,70 +92,19 @@ export default function Dashboard() {
                   <div className="text-sm text-zinc-300">Create a new gym listing</div>
                 </button>
                 <button
-                  onClick={() => navigate("/owner/gyms")}
-                  className="bg-blue-500 hover:bg-blue-400 text-white font-semibold px-6 py-4 rounded-xl transition text-left"
+                  onClick={() => {
+                    const targetGymId = ownerGyms[0]?.id;
+                    if (targetGymId) {
+                      navigate(`/owner/gyms/${targetGymId}/users`);
+                    }
+                  }}
+                  className="bg-blue-500 hover:bg-blue-400 text-white font-semibold px-6 py-4 rounded-xl transition text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={loadingOwnerGyms || ownerGyms.length === 0}
                 >
                   <div className="text-lg font-bold">Gym Users</div>
                   <div className="text-sm opacity-80">View members and activity</div>
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* Facility Plans Section for Owners */}
-          {role === "OWNER" && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Facility Plans</h2>
-              {loadingPlans ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-400 mx-auto"></div>
-                  <p className="text-zinc-300 mt-2">Loading facility plans...</p>
-                </div>
-              ) : facilityPlans.length === 0 ? (
-                <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
-                  <div className="text-4xl mb-2">🏃♀️</div>
-                  <p className="text-zinc-300">No facility plans created yet</p>
-                  <p className="text-zinc-400 text-sm mt-1">Add facilities to your gyms and create plans</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {facilityPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold text-lime-400">{plan.planName}</h3>
-                          <p className="text-sm text-zinc-300">
-                            {plan.facilityName} at {plan.gymName}
-                          </p>
-                          {plan.description && (
-                            <p className="text-xs text-zinc-400 mt-1">{plan.description}</p>
-                          )}
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-lime-400">₹{plan.price}</div>
-                            <div className="text-xs text-zinc-400">{plan.durationDays} days</div>
-                            <span className={`inline-block px-2 py-1 rounded text-xs mt-1 ${
-                              plan.active ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                            }`}>
-                              {plan.active ? "ACTIVE" : "INACTIVE"}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => navigate(`/owner/facilities/${plan.facilityId}/plans/${plan.id}/users`)}
-                            className="px-3 py-1 text-xs rounded-xl bg-purple-500 hover:bg-purple-400 text-white"
-                          >
-                            View Users
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -201,3 +150,5 @@ function Card({ title, value }) {
     </div>
   );
 }
+
+

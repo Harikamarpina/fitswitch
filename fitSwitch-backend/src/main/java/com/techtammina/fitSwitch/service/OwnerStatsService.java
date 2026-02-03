@@ -1,8 +1,6 @@
 package com.techtammina.fitSwitch.service;
 
-import com.techtammina.fitSwitch.dto.GymUserResponse;
-import com.techtammina.fitSwitch.dto.OwnerUserStatsResponse;
-import com.techtammina.fitSwitch.dto.PlanUserResponse;
+import com.techtammina.fitSwitch.dto.*;
 import com.techtammina.fitSwitch.entity.*;
 import com.techtammina.fitSwitch.repository.*;
 import org.springframework.stereotype.Service;
@@ -238,5 +236,84 @@ public class OwnerStatsService {
         }
 
         return planUsers;
+    }
+
+    // New methods for owner visibility
+    public List<OwnerTodayVisitResponse> getTodayVisits(Long ownerId, Long gymId) {
+        // Verify gym belongs to owner
+        Gym gym = gymRepository.findById(gymId)
+                .orElseThrow(() -> new RuntimeException("Gym not found"));
+        
+        if (!gym.getOwnerId().equals(ownerId)) {
+            throw new RuntimeException("Access denied: Not your gym");
+        }
+
+        LocalDate today = LocalDate.now();
+        return gymSessionRepository.findTodayVisitsByGymId(gymId, today);
+    }
+
+    public List<OwnerGymMemberResponse> getGymMembers(Long ownerId, Long gymId) {
+        // Verify gym belongs to owner
+        Gym gym = gymRepository.findById(gymId)
+                .orElseThrow(() -> new RuntimeException("Gym not found"));
+        
+        if (!gym.getOwnerId().equals(ownerId)) {
+            throw new RuntimeException("Access denied: Not your gym");
+        }
+
+        // Update expired memberships and subscriptions
+        updateExpiredPlans(gymId);
+        
+        List<OwnerGymMemberResponse> allMembers = new ArrayList<>();
+        
+        // Get active gym members
+        List<OwnerGymMemberResponse> gymMembers = membershipRepository.findActiveGymMembers(gymId);
+        allMembers.addAll(gymMembers);
+        
+        // Get active facility subscribers (who might not have gym memberships)
+        List<OwnerGymMemberResponse> facilitySubscribers = facilitySubscriptionRepository.findActiveFacilitySubscribers(gymId);
+        
+        // Add facility subscribers who don't already have gym memberships
+        for (OwnerGymMemberResponse facilitySubscriber : facilitySubscribers) {
+            boolean hasGymMembership = gymMembers.stream()
+                    .anyMatch(gymMember -> gymMember.getUserId().equals(facilitySubscriber.getUserId()));
+            
+            if (!hasGymMembership) {
+                allMembers.add(facilitySubscriber);
+            }
+        }
+        
+        return allMembers;
+    }
+
+    public List<OwnerGymMemberResponse> getExpiringSoon(Long ownerId, Long gymId) {
+        // Verify gym belongs to owner
+        Gym gym = gymRepository.findById(gymId)
+                .orElseThrow(() -> new RuntimeException("Gym not found"));
+        
+        if (!gym.getOwnerId().equals(ownerId)) {
+            throw new RuntimeException("Access denied: Not your gym");
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysFromNow = today.plusDays(7);
+        
+        return membershipRepository.findExpiringSoonMembers(gymId, today, sevenDaysFromNow);
+    }
+
+    private void updateExpiredPlans(Long gymId) {
+        LocalDate today = LocalDate.now();
+        
+        // Update expired memberships
+        List<Long> expiredMembershipIds = membershipRepository.findExpiredMembershipIdsByGym(gymId, today);
+        if (!expiredMembershipIds.isEmpty()) {
+            membershipRepository.updateMembershipsToExpired(expiredMembershipIds, MembershipStatus.EXPIRED);
+        }
+        
+        // Update expired facility subscriptions
+        List<Long> expiredSubscriptionIds = facilitySubscriptionRepository.findExpiredSubscriptionIdsByGym(gymId, today);
+        if (!expiredSubscriptionIds.isEmpty()) {
+            facilitySubscriptionRepository.updateSubscriptionsToExpired(expiredSubscriptionIds, FacilitySubscriptionStatus.EXPIRED);
+        }
     }
 }

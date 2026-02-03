@@ -1,17 +1,58 @@
-import { useState } from "react";
-import { checkInToGym, checkOutFromGym } from "../api/sessionApi";
+import { useState, useEffect } from "react";
+import { checkInToGym, checkOutFromGym, getCurrentSession } from "../api/sessionApi";
+import { getAllGyms } from "../api/gymApi";
 
-export default function FacilitySessionCard({ subscription, onSessionUpdate }) {
+export default function FacilitySessionCard({ subscription, onSessionUpdate, dashboardStats }) {
   const [loading, setLoading] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [error, setError] = useState("");
+  const [gymId, setGymId] = useState(null);
+
+  useEffect(() => {
+    // Get gym ID for facility subscription
+    const fetchGymId = async () => {
+      try {
+        const response = await getAllGyms();
+        const gyms = response.data || [];
+        const gym = gyms.find(g => g.name === subscription.gymName || g.gymName === subscription.gymName);
+        
+        if (gym) {
+          setGymId(gym.id);
+        } else {
+          setGymId(1); // Fallback
+        }
+      } catch (err) {
+        setGymId(1); // Fallback
+      }
+    };
+    
+    if (subscription.gymId || subscription.gym_id) {
+      setGymId(subscription.gymId || subscription.gym_id);
+    } else {
+      fetchGymId();
+    }
+  }, [subscription]);
+
+  useEffect(() => {
+    // Set active session based on dashboard stats
+    if (dashboardStats?.currentSessionStatus === "ACTIVE") {
+      setActiveSession({ status: "ACTIVE", checkInTime: new Date() });
+    } else {
+      setActiveSession(null);
+    }
+  }, [dashboardStats]);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const response = await checkInToGym(subscription.gymId);
+      if (!gymId) {
+        setError("Unable to determine gym ID. Please try again.");
+        return;
+      }
+      
+      const response = await checkInToGym(gymId);
       setActiveSession(response.data);
       
       if (onSessionUpdate) {
