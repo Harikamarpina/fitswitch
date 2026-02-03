@@ -5,6 +5,7 @@ import com.techtammina.fitSwitch.entity.*;
 import com.techtammina.fitSwitch.repository.*;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public class UserDashboardStatsService {
     private final GymFacilityRepository gymFacilityRepository;
     private final FacilityPlanRepository facilityPlanRepository;
     private final GymPlanRepository gymPlanRepository;
+    private final UserWalletRepository walletRepository;
 
     public UserDashboardStatsService(GymSessionRepository gymSessionRepository,
                                    MembershipRepository membershipRepository,
@@ -27,7 +29,8 @@ public class UserDashboardStatsService {
                                    GymRepository gymRepository,
                                    GymFacilityRepository gymFacilityRepository,
                                    FacilityPlanRepository facilityPlanRepository,
-                                   GymPlanRepository gymPlanRepository) {
+                                   GymPlanRepository gymPlanRepository,
+                                   UserWalletRepository walletRepository) {
         this.gymSessionRepository = gymSessionRepository;
         this.membershipRepository = membershipRepository;
         this.facilitySubscriptionRepository = facilitySubscriptionRepository;
@@ -35,6 +38,7 @@ public class UserDashboardStatsService {
         this.gymFacilityRepository = gymFacilityRepository;
         this.facilityPlanRepository = facilityPlanRepository;
         this.gymPlanRepository = gymPlanRepository;
+        this.walletRepository = walletRepository;
     }
 
     public UserDashboardStatsResponse getUserDashboardStats(Long userId) {
@@ -47,6 +51,12 @@ public class UserDashboardStatsService {
         // Last visit date
         Optional<LocalDate> lastVisitDate = gymSessionRepository.findLastVisitDateByUserId(userId);
         response.setLastVisitDate(lastVisitDate.orElse(null));
+
+        // Wallet balance
+        BigDecimal walletBalance = walletRepository.findByUserId(userId)
+                .map(UserWallet::getBalance)
+                .orElse(BigDecimal.ZERO);
+        response.setWalletBalance(walletBalance);
 
         // Active memberships
         List<Membership> activeMemberships = membershipRepository.findByUserIdAndStatus(userId, MembershipStatus.ACTIVE);

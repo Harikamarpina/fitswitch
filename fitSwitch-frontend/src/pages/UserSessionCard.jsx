@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { checkInToGym, checkOutFromGym } from "../api/sessionApi";
 import { getAllGyms } from "../api/gymApi";
+import UnsubscribeModal from "../components/UnsubscribeModal";
 
 export default function UserSessionCard({ membership, onSessionUpdate, dashboardStats }) {
   const [loading, setLoading] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [gymId, setGymId] = useState(null);
+  const [showUnsubscribeModal, setShowUnsubscribeModal] = useState(false);
 
   useEffect(() => {
     // Get gym ID by matching gym name
@@ -111,6 +114,16 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
 
       <div className="space-y-3 mb-4">
         <div className="flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Pass Type</span>
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+            membership.passType === 'HYBRID' 
+              ? 'bg-purple-500/20 text-purple-400' 
+              : 'bg-blue-500/20 text-blue-400'
+          }`}>
+            {membership.passType || 'REGULAR'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-sm">
           <span className="text-zinc-400">Duration</span>
           <span className="font-medium">{membership.durationDays} days</span>
         </div>
@@ -130,6 +143,12 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         </div>
       )}
 
+      {success && (
+        <div className="mb-4 bg-green-500/10 border border-green-500/30 text-green-200 p-3 rounded-lg text-sm">
+          {success}
+        </div>
+      )}
+
       {activeSession && (
         <div className="mb-4 bg-lime-500/10 border border-lime-500/30 text-lime-200 p-3 rounded-lg text-sm">
           <p className="font-semibold">Active Session</p>
@@ -137,7 +156,7 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         </div>
       )}
 
-      <div className="pt-4 border-t border-white/10">
+      <div className="pt-4 border-t border-white/10 space-y-3">
         {!activeSession ? (
           <button
             onClick={handleCheckIn}
@@ -177,7 +196,26 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
             )}
           </button>
         )}
+        
+        {membership.status === "ACTIVE" && (
+          <button
+            onClick={() => setShowUnsubscribeModal(true)}
+            className="w-full px-4 py-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 font-semibold hover:bg-red-500/30 transition"
+          >
+            Request Unsubscribe
+          </button>
+        )}
       </div>
+
+      <UnsubscribeModal
+        membership={membership}
+        isOpen={showUnsubscribeModal}
+        onClose={() => setShowUnsubscribeModal(false)}
+        onSuccess={(message) => {
+          setSuccess(message);
+          setTimeout(() => setSuccess(""), 5000);
+        }}
+      />
     </div>
   );
 }

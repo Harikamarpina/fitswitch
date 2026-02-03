@@ -27,10 +27,12 @@ import EditGymPlan from "./pages/EditGymPlan";
 import OwnerGymUsers from "./pages/OwnerGymUsers";
 import OwnerUserStats from "./pages/OwnerUserStats";
 import PlanUsers from "./pages/PlanUsers";
+import Wallet from "./pages/Wallet";
+import DigitalCard from "./pages/DigitalCard";
+import MembershipSwitch from "./pages/MembershipSwitch";
+import OwnerEarnings from "./pages/OwnerEarnings";
 
-
-
-
+import UnsubscribeRequests from "./pages/UnsubscribeRequests";
 
 export default function App() {
   return (
@@ -72,6 +74,33 @@ export default function App() {
         />
         <Route path="/gyms/:gymId/facilities/:facilityId/plans" element={<FacilityPlans />} />
         <Route path="/purchase-facility-plan" element={<PurchaseFacilityPlan />} />
+        
+        {/* Wallet and Digital Card Routes */}
+        <Route
+          path="/wallet"
+          element={
+            <ProtectedRoute>
+              <Wallet />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/digital-card"
+          element={
+            <ProtectedRoute>
+              <DigitalCard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/membership/switch"
+          element={
+            <ProtectedRoute>
+              <MembershipSwitch />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route
           path="/owner/facilities/:facilityId/plans"
           element={
@@ -113,6 +142,26 @@ export default function App() {
           element={
             <ProtectedRoute>
               <OwnerEditGym />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Owner Earnings Route */}
+        <Route
+          path="/owner/earnings"
+          element={
+            <ProtectedRoute>
+              <OwnerEarnings />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Owner Unsubscribe Requests Route */}
+        <Route
+          path="/owner/unsubscribe-requests"
+          element={
+            <ProtectedRoute>
+              <UnsubscribeRequests />
             </ProtectedRoute>
           }
         />

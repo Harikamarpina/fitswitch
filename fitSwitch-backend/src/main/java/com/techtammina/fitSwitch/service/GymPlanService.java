@@ -37,7 +37,9 @@ public class GymPlanService {
         plan.setPlanName(request.getPlanName());
         plan.setDescription(request.getDescription());
         plan.setDurationDays(request.getDurationDays());
+        plan.setDurationMonths(request.getDurationMonths());
         plan.setPrice(request.getPrice());
+        plan.setPassType(request.getPassType());
         plan.setActive(true);
         plan.setCreatedAt(LocalDateTime.now());
         plan.setUpdatedAt(LocalDateTime.now());
@@ -115,6 +117,8 @@ public class GymPlanService {
         response.setPlanName(plan.getPlanName());
         response.setDescription(plan.getDescription());
         response.setDurationDays(plan.getDurationDays());
+        response.setDurationMonths(plan.getDurationMonths());
+        response.setPassType(plan.getPassType());
         response.setPrice(plan.getPrice() != null ? plan.getPrice().doubleValue() : null);
         response.setActive(plan.isActive());
         return response;

@@ -1,5 +1,7 @@
 package com.techtammina.fitSwitch.dto;
 
+import com.techtammina.fitSwitch.entity.FacilitySubscriptionStatus;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class UserFacilityHistoryResponse {
@@ -12,23 +14,24 @@ public class UserFacilityHistoryResponse {
     private LocalDate endDate;
     private String status;
     private Double price;
+    private Integer durationDays;
 
     // Constructors
     public UserFacilityHistoryResponse() {}
 
     public UserFacilityHistoryResponse(Long id, String gymName, String facilityName, 
-                                     String planName, LocalDate purchaseDate, 
-                                     LocalDate startDate, LocalDate endDate, 
-                                     String status, Double price) {
+                                     String planName, LocalDate startDate, LocalDate endDate, 
+                                     FacilitySubscriptionStatus status, BigDecimal price, Integer durationDays) {
         this.id = id;
         this.gymName = gymName;
         this.facilityName = facilityName;
         this.planName = planName;
-        this.purchaseDate = purchaseDate;
+        this.purchaseDate = startDate;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.status = status;
-        this.price = price;
+        this.status = status.toString();
+        this.price = price != null ? price.doubleValue() : null;
+        this.durationDays = durationDays;
     }
 
     // Getters and Setters
@@ -58,4 +61,7 @@ public class UserFacilityHistoryResponse {
 
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    
+    public Integer getDurationDays() { return durationDays; }
+    public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
 }

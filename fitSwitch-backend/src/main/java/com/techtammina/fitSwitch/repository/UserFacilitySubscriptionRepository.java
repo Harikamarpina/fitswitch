@@ -1,5 +1,6 @@
 package com.techtammina.fitSwitch.repository;
 
+import com.techtammina.fitSwitch.dto.OwnerGymMemberResponse;
 import com.techtammina.fitSwitch.dto.UserFacilityHistoryResponse;
 import com.techtammina.fitSwitch.entity.FacilitySubscriptionStatus;
 import com.techtammina.fitSwitch.entity.UserFacilitySubscription;
@@ -52,4 +53,16 @@ public interface UserFacilitySubscriptionRepository extends JpaRepository<UserFa
     
     List<UserFacilitySubscription> findByGymIdAndStatusAndEndDateBetween(
             Long gymId, FacilitySubscriptionStatus status, LocalDate startDate, LocalDate endDate);
+    
+    @Query("SELECT ufs.id FROM UserFacilitySubscription ufs WHERE ufs.userId = :userId AND ufs.status = 'ACTIVE' AND ufs.endDate < :today")
+    List<Long> findExpiredSubscriptionIds(@Param("userId") Long userId, @Param("today") LocalDate today);
+    
+    @Query("SELECT new com.techtammina.fitSwitch.dto.UserFacilityHistoryResponse(" +
+           "ufs.id, g.gymName, gf.facilityName, fp.planName, ufs.startDate, ufs.endDate, ufs.status, fp.price, fp.durationDays) " +
+           "FROM UserFacilitySubscription ufs " +
+           "JOIN Gym g ON ufs.gymId = g.id " +
+           "JOIN GymFacility gf ON ufs.facilityId = gf.id " +
+           "JOIN FacilityPlan fp ON ufs.facilityPlanId = fp.id " +
+           "WHERE ufs.userId = :userId ORDER BY ufs.createdAt DESC")
+    List<UserFacilityHistoryResponse> findFacilityHistoryByUserId(@Param("userId") Long userId);
 }
