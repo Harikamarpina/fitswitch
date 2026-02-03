@@ -5,7 +5,9 @@ import com.techtammina.fitSwitch.dto.UserFacilitySubscriptionResponse;
 import com.techtammina.fitSwitch.entity.*;
 import com.techtammina.fitSwitch.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,17 +19,24 @@ public class UserFacilitySubscriptionService {
     private final FacilityPlanRepository facilityPlanRepository;
     private final GymFacilityRepository gymFacilityRepository;
     private final GymRepository gymRepository;
+    private final UserWalletRepository walletRepository;
+    private final WalletTransactionRepository transactionRepository;
 
     public UserFacilitySubscriptionService(UserFacilitySubscriptionRepository subscriptionRepository,
                                           FacilityPlanRepository facilityPlanRepository,
                                           GymFacilityRepository gymFacilityRepository,
-                                          GymRepository gymRepository) {
+                                          GymRepository gymRepository,
+                                          UserWalletRepository walletRepository,
+                                          WalletTransactionRepository transactionRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.facilityPlanRepository = facilityPlanRepository;
         this.gymFacilityRepository = gymFacilityRepository;
         this.gymRepository = gymRepository;
+        this.walletRepository = walletRepository;
+        this.transactionRepository = transactionRepository;
     }
 
+    @Transactional
     public UserFacilitySubscriptionResponse subscribeFacility(Long userId, FacilitySubscribeRequest request) {
         // Validate facility plan exists and is active
         FacilityPlan plan = facilityPlanRepository.findById(request.getFacilityPlanId())
@@ -37,12 +46,37 @@ public class UserFacilitySubscriptionService {
             throw new RuntimeException("Facility plan is not active");
         }
 
+        // Check wallet balance
+        UserWallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Please add money to your wallet to subscribe"));
+        
+        if (wallet.getBalance().compareTo(plan.getPrice()) < 0) {
+            throw new RuntimeException("Insufficient wallet balance. Please add money to your wallet to subscribe");
+        }
+
         // Check if user already has active subscription for this facility
         subscriptionRepository.findByUserIdAndFacilityIdAndStatus(
                 userId, plan.getFacilityId(), FacilitySubscriptionStatus.ACTIVE)
                 .ifPresent(existing -> {
                     throw new RuntimeException("Active facility subscription already exists");
                 });
+
+        // Deduct money from wallet
+        BigDecimal newBalance = wallet.getBalance().subtract(plan.getPrice());
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+
+        // TODO: Fix database schema for wallet_transactions.type column length
+        // Create wallet transaction
+        // WalletTransaction transaction = new WalletTransaction();
+        // transaction.setUserId(userId);
+        // transaction.setWalletId(wallet.getId());
+        // transaction.setType(WalletTransaction.TransactionType.SUB);
+        // transaction.setAmount(plan.getPrice().negate());
+        // transaction.setBalanceAfter(newBalance);
+        // transaction.setDescription("Subscription payment: " + plan.getPlanName());
+        // transaction.setCreatedAt(LocalDateTime.now());
+        // transactionRepository.save(transaction);
 
         // Create subscription
         UserFacilitySubscription subscription = new UserFacilitySubscription();

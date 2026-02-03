@@ -118,18 +118,22 @@ export default function UserGymVisit() {
 
   if (!gym && !loading) {
     return (
-      <div className="min-h-screen bg-black text-white px-5 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Link to="/user/dashboard" className="underline text-zinc-200 hover:text-white">
-            ← Back to Dashboard
+      <div className="min-h-screen bg-black text-white px-6 py-10">
+        <div className="max-w-2xl mx-auto text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
+          <div className="text-6xl mb-6 opacity-20">🚫</div>
+          <h2 className="text-2xl font-bold mb-2">No Membership Found</h2>
+          <p className="text-zinc-500 mb-8 max-w-sm mx-auto">
+            You need an active membership to access this gym's session controls.
+          </p>
+          <Link
+            to="/gyms"
+            className="inline-block px-8 py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-95 shadow-lg shadow-lime-500/10"
+          >
+            Browse Gyms
           </Link>
-          <div className="mt-8 text-center">
-            <p className="text-red-400 mb-4">No membership found for this gym</p>
-            <Link
-              to="/gyms"
-              className="inline-block px-6 py-3 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-            >
-              Browse Gyms
+          <div className="mt-8">
+            <Link to="/user/dashboard" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors">
+              ← Return to Dashboard
             </Link>
           </div>
         </div>
@@ -138,119 +142,132 @@ export default function UserGymVisit() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-2xl mx-auto">
-        <Link to="/user/dashboard" className="underline text-zinc-200 hover:text-white">
-          ← Back to Dashboard
-        </Link>
+    <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
-        <h1 className="text-2xl font-bold mt-4">Gym Visit</h1>
-        <p className="text-zinc-300 mt-2">Check in and out of your gym sessions</p>
+      <div className="max-w-2xl mx-auto relative z-10">
+        <div className="mb-12">
+          <Link
+            to="/user/dashboard"
+            className="text-sm font-medium text-zinc-500 hover:text-white transition-colors flex items-center gap-2 mb-6"
+          >
+            ← Back to Dashboard
+          </Link>
+          <h1 className="text-4xl font-bold tracking-tight">Gym Visit</h1>
+          <p className="text-zinc-400 mt-2 text-lg">
+            Manage your attendance for today's session.
+          </p>
+        </div>
 
         {error && (
-          <div className="mt-4 bg-red-500/10 border border-red-500/30 text-red-200 p-3 rounded-lg text-sm">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-medium">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mt-4 bg-green-500/10 border border-green-500/30 text-green-200 p-3 rounded-lg text-sm">
+          <div className="mb-8 bg-lime-500/10 border border-lime-500/20 text-lime-400 p-4 rounded-2xl text-sm font-medium">
             {success}
           </div>
         )}
 
-        {/* Gym Information */}
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-xl font-bold mb-4">{gym.gymName}</h2>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-zinc-300">Membership Status</span>
+        {/* Gym Information Card */}
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8 mb-8 backdrop-blur-md relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest block mb-2">Partner Gym</span>
+                <h2 className="text-3xl font-bold text-white tracking-tight">{gym.gymName}</h2>
+              </div>
               {membership ? (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                  ACTIVE
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full bg-lime-500/10 text-lime-500 border border-lime-500/20">
+                  Active Member
                 </span>
               ) : (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                  NO MEMBERSHIP
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
+                  No Membership
                 </span>
               )}
             </div>
             
             {membership && (
-              <>
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-300">Plan</span>
-                  <span className="text-sm">{membership.planName}</span>
+              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-800/50">
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter block mb-1">Active Plan</span>
+                  <span className="text-sm font-bold text-zinc-200">{membership.planName}</span>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-300">Valid Until</span>
-                  <span className="text-sm">{new Date(membership.endDate).toLocaleDateString()}</span>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter block mb-1">Valid Until</span>
+                  <span className="text-sm font-bold text-zinc-200">{new Date(membership.endDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Visit Status */}
+        {/* Visit Status Card */}
         {membership && (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold mb-4">Today's Visit</h3>
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 mb-10">
+            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">Today's Session</h3>
             
             {activeVisit ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-300">Status</span>
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+              <div className="space-y-6">
+                <div className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-zinc-800/50">
+                  <span className="text-zinc-400 font-medium">Current Status</span>
+                  <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md ${
                     activeVisit.status === "ACTIVE" 
-                      ? "bg-lime-500/20 text-lime-400 border border-lime-500/30"
-                      : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      ? "bg-lime-500 text-black shadow-lg shadow-lime-500/10"
+                      : "bg-zinc-800 text-zinc-400"
                   }`}>
-                    {activeVisit.status === "ACTIVE" ? "CHECKED IN" : "COMPLETED"}
+                    {activeVisit.status === "ACTIVE" ? "Checked In" : "Completed"}
                   </span>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-300">Check-in Time</span>
-                  <span className="font-medium">{formatTime(activeVisit.checkInTime)}</span>
-                </div>
-                
-                {activeVisit.checkOutTime && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-zinc-300">Check-out Time</span>
-                    <span className="font-medium">{formatTime(activeVisit.checkOutTime)}</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-black/20 rounded-2xl border border-zinc-800/50 text-center">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest block mb-1">Entry</span>
+                    <span className="text-xl font-black text-zinc-200">{formatTime(activeVisit.checkInTime)}</span>
                   </div>
-                )}
+                  
+                  <div className="p-4 bg-black/20 rounded-2xl border border-zinc-800/50 text-center">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest block mb-1">Exit</span>
+                    <span className="text-xl font-black text-zinc-200">
+                      {activeVisit.checkOutTime ? formatTime(activeVisit.checkOutTime) : "--:--"}
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
-              <p className="text-zinc-400">No visit recorded for today</p>
+              <div className="text-center py-6">
+                <p className="text-zinc-500 italic">No attendance recorded for today yet.</p>
+              </div>
             )}
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-8">
+        {/* Action Controls */}
+        <div className="space-y-4">
           {!membership ? (
-            <div className="text-center">
-              <p className="text-zinc-400 mb-4">You need an active membership to visit this gym</p>
+            <div className="text-center p-8 bg-zinc-900/20 border border-zinc-800 border-dashed rounded-3xl">
+              <p className="text-zinc-500 font-medium mb-6">You need an active membership to access this gym.</p>
               <Link
-                to="/gyms"
-                className="inline-block px-6 py-3 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
+                to={`/gyms/${gymId}`}
+                className="inline-block px-8 py-4 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98]"
               >
                 Browse Gym Plans
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {/* Check In Button */}
               {(!activeVisit || activeVisit.status === "COMPLETED") && (
                 <button
                   onClick={handleCheckIn}
                   disabled={actionLoading}
-                  className="w-full px-4 py-3 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full py-5 rounded-2xl bg-lime-500 text-black font-black text-lg hover:bg-lime-400 transition-all active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-lime-500/10"
                 >
-                  {actionLoading ? "Checking In..." : "Check In"}
+                  {actionLoading ? "Processing..." : "Check In Now"}
                 </button>
               )}
 
@@ -259,13 +276,19 @@ export default function UserGymVisit() {
                 <button
                   onClick={handleCheckOut}
                   disabled={actionLoading}
-                  className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full py-5 rounded-2xl bg-white text-black font-black text-lg hover:bg-red-500 hover:text-white transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  {actionLoading ? "Checking Out..." : "Check Out"}
+                  {actionLoading ? "Processing..." : "Check Out"}
                 </button>
               )}
             </div>
           )}
+        </div>
+
+        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
+          <Link to="/user/dashboard" className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
+            ← Return to Dashboard
+          </Link>
         </div>
       </div>
     </div>

@@ -20,15 +20,21 @@ public class MembershipService {
     private final GymRepository gymRepository;
     private final GymPlanRepository planRepository;
     private final OwnerEarningRepository ownerEarningRepository;
+    private final UserWalletRepository walletRepository;
+    private final WalletTransactionRepository transactionRepository;
 
     public MembershipService(MembershipRepository membershipRepository, 
                            GymRepository gymRepository, 
                            GymPlanRepository planRepository,
-                           OwnerEarningRepository ownerEarningRepository) {
+                           OwnerEarningRepository ownerEarningRepository,
+                           UserWalletRepository walletRepository,
+                           WalletTransactionRepository transactionRepository) {
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
         this.planRepository = planRepository;
         this.ownerEarningRepository = ownerEarningRepository;
+        this.walletRepository = walletRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Transactional
@@ -54,11 +60,37 @@ public class MembershipService {
             throw new RuntimeException("Plan does not belong to the selected gym");
         }
 
+        // Check wallet balance
+        UserWallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Please add money to your wallet to subscribe"));
+        
+        if (wallet.getBalance().compareTo(plan.getPrice()) < 0) {
+            throw new RuntimeException("Insufficient wallet balance. Please add money to your wallet to subscribe");
+        }
+
         // Check if user already has active membership for this gym
         membershipRepository.findByUserIdAndGymIdAndStatus(userId, request.getGymId(), MembershipStatus.ACTIVE)
                 .ifPresent(existing -> {
                     throw new RuntimeException("Active membership already exists for this gym");
                 });
+
+        // Deduct money from wallet
+        BigDecimal newBalance = wallet.getBalance().subtract(plan.getPrice());
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+
+        // TODO: Fix database schema for wallet_transactions.type column length
+        // Create wallet transaction
+        // WalletTransaction transaction = new WalletTransaction();
+        // transaction.setUserId(userId);
+        // transaction.setWalletId(wallet.getId());
+        // transaction.setType(WalletTransaction.TransactionType.SUB);
+        // transaction.setAmount(plan.getPrice().negate());
+        // transaction.setBalanceAfter(newBalance);
+        // transaction.setDescription("Membership subscription: " + plan.getPlanName());
+        // transaction.setGymId(request.getGymId());
+        // transaction.setCreatedAt(LocalDateTime.now());
+        // transactionRepository.save(transaction);
 
         // Create membership
         Membership membership = new Membership();

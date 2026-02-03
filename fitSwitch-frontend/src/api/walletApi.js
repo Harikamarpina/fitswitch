@@ -3,7 +3,7 @@ import axiosInstance from './axiosInstance';
 // Get wallet balance
 export const getWalletBalance = async () => {
   try {
-    const response = await axiosInstance.get('/wallet/balance');
+    const response = await axiosInstance.get('/api/wallet/balance');
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -13,7 +13,7 @@ export const getWalletBalance = async () => {
 // Add money to wallet
 export const addMoney = async (amount) => {
   try {
-    const response = await axiosInstance.post('/wallet/add-money', { amount });
+    const response = await axiosInstance.post('/api/wallet/add-money', { amount });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -23,7 +23,7 @@ export const addMoney = async (amount) => {
 // Use facility with wallet
 export const useFacility = async (gymId, facilityId) => {
   try {
-    const response = await axiosInstance.post('/wallet/use-facility', {
+    const response = await axiosInstance.post('/api/wallet/use-facility', {
       gymId,
       facilityId
     });
@@ -36,7 +36,7 @@ export const useFacility = async (gymId, facilityId) => {
 // Get wallet transaction history
 export const getTransactionHistory = async () => {
   try {
-    const response = await axiosInstance.get('/wallet/transactions');
+    const response = await axiosInstance.get('/api/wallet/transactions');
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
