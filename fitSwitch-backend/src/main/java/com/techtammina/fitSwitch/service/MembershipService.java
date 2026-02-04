@@ -115,6 +115,24 @@ public class MembershipService {
         earning.setMembershipId(saved.getId());
         earning.setCreatedAt(LocalDateTime.now());
         ownerEarningRepository.save(earning);
+
+        // Credit owner wallet with the membership amount
+        UserWallet ownerWallet = walletRepository.findByUserId(gym.getOwnerId())
+                .orElseGet(() -> new UserWallet(gym.getOwnerId(), BigDecimal.ZERO));
+        ownerWallet.setBalance(ownerWallet.getBalance().add(plan.getPrice()));
+        UserWallet savedOwnerWallet = walletRepository.save(ownerWallet);
+
+        WalletTransaction ownerWalletTxn = new WalletTransaction();
+        ownerWalletTxn.setUserId(gym.getOwnerId());
+        ownerWalletTxn.setWalletId(savedOwnerWallet.getId());
+        ownerWalletTxn.setType(WalletTransaction.TransactionType.OWNER_EARNING);
+        ownerWalletTxn.setAmount(plan.getPrice());
+        ownerWalletTxn.setBalanceAfter(savedOwnerWallet.getBalance());
+        ownerWalletTxn.setDescription("Owner earning: membership purchase");
+        ownerWalletTxn.setGymId(request.getGymId());
+        ownerWalletTxn.setMembershipId(saved.getId());
+        ownerWalletTxn.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerWalletTxn);
         
         return mapToResponse(saved, gym, plan);
     }
@@ -163,6 +181,7 @@ public class MembershipService {
         response.setStatus(membership.getStatus());
         response.setPrice(plan != null ? plan.getPrice().doubleValue() : null);
         response.setDurationDays(plan != null ? plan.getDurationDays() : null);
+        response.setPassType(plan != null ? plan.getPassType() : null);
         return response;
     }
 

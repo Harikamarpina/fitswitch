@@ -57,6 +57,11 @@ public class JwtUtils {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return user.getId();
     }
+    
+    public String getUsernameFromRequest(HttpServletRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth.getName();
+    }
 
     public boolean validateJwtToken(String authToken) {
         try {

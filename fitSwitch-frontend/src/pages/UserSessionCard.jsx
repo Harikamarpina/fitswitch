@@ -1,62 +1,69 @@
 import { useState, useEffect } from "react";
-import { checkInToGym, checkOutFromGym } from "../api/sessionApi";
-import { getAllGyms } from "../api/gymApi";
-import UnsubscribeModal from "../components/UnsubscribeModal";
-
-export default function UserSessionCard({ membership, onSessionUpdate, dashboardStats }) {
+import { checkInToMembership, checkOutFromMembership, getMembershipSession } from "../api/sessionApi";
+export default function UserSessionCard({ membership, onSessionUpdate, dashboardStats, onUnsubscribe }) {
   const [loading, setLoading] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [gymId, setGymId] = useState(null);
-  const [showUnsubscribeModal, setShowUnsubscribeModal] = useState(false);
+
+  // Track if user has checked in today (persists after checkout)
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
 
   useEffect(() => {
-    // Get gym ID by matching gym name
-    const fetchGymId = async () => {
+    // Set active session based on current session API only
+    const checkActiveSession = async () => {
+      console.log('Dashboard stats:', dashboardStats);
+      console.log('Current session status:', dashboardStats?.currentSessionStatus);
+      if (!membership?.id) return;
+      
       try {
-        const response = await getAllGyms();
-        const gyms = response.data || [];
-        const gym = gyms.find(g => g.name === membership.gymName || g.gymName === membership.gymName);
+        // Always check membership session API for accurate state
+        const response = await getMembershipSession(membership.id);
+        const sessionData = response.data;
+        console.log('Current session data:', sessionData);
         
-        if (gym) {
-          setGymId(gym.id);
+        // Check if there's an active session for this membership
+        if (sessionData && sessionData.membershipId === membership.id && sessionData.status === 'ACTIVE') {
+          setActiveSession({ 
+            status: "ACTIVE", 
+            checkInTime: sessionData.checkInTime || new Date().toISOString()
+          });
+          setHasCheckedInToday(true);
+          console.log('Setting active session for:', membership.gymName);
         } else {
-          setGymId(1); // Fallback
+          setActiveSession(null);
+          console.log('No active session for this gym');
         }
       } catch (err) {
-        setGymId(1); // Fallback
+        console.log('No current session or error:', err);
+        setActiveSession(null);
+      }
+      
+      // Check if user has visited today (even if session is not active)
+      if (dashboardStats?.lastVisitDate) {
+        const today = new Date().toDateString();
+        const lastVisit = new Date(dashboardStats.lastVisitDate).toDateString();
+        if (today === lastVisit) {
+          setHasCheckedInToday(true);
+        }
       }
     };
     
-    if (membership.gymId || membership.gym_id) {
-      setGymId(membership.gymId || membership.gym_id);
-    } else {
-      fetchGymId();
+    if (membership?.id) {
+      checkActiveSession();
     }
-  }, [membership]);
-
-  useEffect(() => {
-    // Set active session based on dashboard stats
-    if (dashboardStats?.currentSessionStatus === "ACTIVE") {
-      setActiveSession({ status: "ACTIVE", checkInTime: new Date() });
-    } else {
-      setActiveSession(null);
-    }
-  }, [dashboardStats]);
+  }, [dashboardStats, membership.gymName, membership.id]);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setError("");
       
-      if (!gymId) {
-        setError("Unable to determine gym ID. Please try again.");
-        return;
-      }
-      
-      const response = await checkInToGym(gymId);
-      setActiveSession(response.data);
+      const response = await checkInToMembership(membership.id);
+      // Set active session immediately for UI responsiveness
+      setActiveSession({ 
+        status: "ACTIVE", 
+        checkInTime: new Date().toISOString()
+      });
       
       if (onSessionUpdate) {
         onSessionUpdate(response.data);
@@ -74,13 +81,21 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
       setLoading(true);
       setError("");
       
-      const response = await checkOutFromGym();
+      console.log('Attempting to check out...');
+      console.log('Dashboard session status:', dashboardStats?.currentSessionStatus);
+      
+      const response = await checkOutFromMembership(membership.id);
+      console.log('Check-out response:', response);
+      
+      // Clear active session but keep track that user checked in today
       setActiveSession(null);
       
       if (onSessionUpdate) {
         onSessionUpdate(null);
       }
     } catch (err) {
+      console.error('Check-out error:', err);
+      console.error('Error response:', err.response?.data);
       const errorMessage = err.response?.data?.message || "Check-out failed";
       setError(errorMessage);
     } finally {
@@ -145,12 +160,6 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         </div>
       )}
 
-      {success && (
-        <div className="mb-4 bg-lime-500/10 border border-lime-500/20 text-lime-500 p-3 rounded-xl text-xs font-medium">
-          {success}
-        </div>
-      )}
-
       {activeSession && (
         <div className="mb-6 bg-zinc-950 border border-zinc-800 p-4 rounded-2xl">
           <div className="flex items-center gap-3">
@@ -167,9 +176,9 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         {!activeSession ? (
           <button
             onClick={handleCheckIn}
-            disabled={loading || membership.status !== "ACTIVE"}
+            disabled={loading || membership.status !== "ACTIVE" || hasCheckedInToday}
             className={`w-full py-3.5 rounded-2xl font-bold transition-all active:scale-[0.98] ${
-              loading || membership.status !== "ACTIVE"
+              loading || membership.status !== "ACTIVE" || hasCheckedInToday
                 ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
                 : "bg-lime-500 text-black hover:bg-lime-400 shadow-lg shadow-lime-500/10"
             }`}
@@ -182,7 +191,7 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
                 </svg>
                 Processing...
               </span>
-            ) : "Check In Now"}
+            ) : hasCheckedInToday ? "Already Checked In Today" : "Check In Now"}
           </button>
         ) : (
           <button
@@ -200,23 +209,13 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         
         {membership.status === "ACTIVE" && (
           <button
-            onClick={() => setShowUnsubscribeModal(true)}
+            onClick={() => onUnsubscribe(membership)}
             className="w-full py-2.5 rounded-xl text-zinc-500 text-xs font-bold uppercase tracking-widest hover:text-red-400 hover:bg-red-500/5 transition-all"
           >
             Cancel Subscription
           </button>
         )}
       </div>
-
-      <UnsubscribeModal
-        membership={membership}
-        isOpen={showUnsubscribeModal}
-        onClose={() => setShowUnsubscribeModal(false)}
-        onSuccess={(message) => {
-          setSuccess(message);
-          setTimeout(() => setSuccess(""), 5000);
-        }}
-      />
     </div>
   );
 }

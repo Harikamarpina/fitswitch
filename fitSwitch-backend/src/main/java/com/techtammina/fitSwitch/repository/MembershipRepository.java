@@ -31,7 +31,7 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     @Query("SELECT new com.techtammina.fitSwitch.dto.OwnerGymMemberResponse(" +
            "u.id, u.fullName, u.email, gp.planName, 'GYM', m.startDate, m.endDate, " +
            "CAST(m.status AS string), " +
-           "(SELECT MAX(gs.visitDate) FROM GymSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
+           "(SELECT MAX(gs.visitDate) FROM GymMembershipSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
            "FROM Membership m " +
            "JOIN User u ON m.userId = u.id " +
            "JOIN GymPlan gp ON m.planId = gp.id " +
@@ -41,7 +41,7 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     @Query("SELECT new com.techtammina.fitSwitch.dto.OwnerGymMemberResponse(" +
            "u.id, u.fullName, u.email, gp.planName, 'GYM', m.startDate, m.endDate, " +
            "CAST(m.status AS string), " +
-           "(SELECT MAX(gs.visitDate) FROM GymSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
+           "(SELECT MAX(gs.visitDate) FROM GymMembershipSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
            "FROM Membership m " +
            "JOIN User u ON m.userId = u.id " +
            "JOIN GymPlan gp ON m.planId = gp.id " +

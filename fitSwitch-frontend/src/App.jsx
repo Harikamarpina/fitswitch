@@ -32,8 +32,10 @@ import DigitalCard from "./pages/DigitalCard";
 import MembershipSwitch from "./pages/MembershipSwitch";
 import OwnerEarnings from "./pages/OwnerEarnings";
 import GymMap from "./pages/GymMap";
+import SessionHistory from "./pages/SessionHistory";
 
 import UnsubscribeRequests from "./pages/UnsubscribeRequests";
+import UserCancellationRequests from "./pages/UserCancellationRequests";
 
 export default function App() {
   return (
@@ -76,6 +78,14 @@ export default function App() {
         />
         <Route path="/gyms/:gymId/facilities/:facilityId/plans" element={<FacilityPlans />} />
         <Route path="/purchase-facility-plan" element={<PurchaseFacilityPlan />} />
+        <Route
+          path="/user/cancellation-requests"
+          element={
+            <ProtectedRoute>
+              <UserCancellationRequests />
+            </ProtectedRoute>
+          }
+        />
         
         {/* Wallet and Digital Card Routes */}
         <Route
@@ -99,6 +109,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <MembershipSwitch />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/sessions"
+          element={
+            <ProtectedRoute>
+              <SessionHistory />
             </ProtectedRoute>
           }
         />

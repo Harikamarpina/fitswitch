@@ -14,7 +14,7 @@ import java.util.Optional;
 @Service
 public class OwnerStatsService {
 
-    private final GymSessionRepository gymSessionRepository;
+    private final GymMembershipSessionRepository gymSessionRepository;
     private final MembershipRepository membershipRepository;
     private final UserFacilitySubscriptionRepository facilitySubscriptionRepository;
     private final GymRepository gymRepository;
@@ -23,7 +23,7 @@ public class OwnerStatsService {
     private final FacilityPlanRepository facilityPlanRepository;
     private final GymPlanRepository gymPlanRepository;
 
-    public OwnerStatsService(GymSessionRepository gymSessionRepository,
+    public OwnerStatsService(GymMembershipSessionRepository gymSessionRepository,
                            MembershipRepository membershipRepository,
                            UserFacilitySubscriptionRepository facilitySubscriptionRepository,
                            GymRepository gymRepository,
@@ -135,9 +135,9 @@ public class OwnerStatsService {
         response.setTotalVisitCount(totalVisits);
 
         // Get latest session info
-        List<GymSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(userId, gymId);
+        List<GymMembershipSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(userId, gymId);
         if (!latestSessions.isEmpty()) {
-            GymSession latestSession = latestSessions.get(0);
+            GymMembershipSession latestSession = latestSessions.get(0);
             response.setLastCheckIn(latestSession.getCheckInTime());
             response.setLastCheckOut(latestSession.getCheckOutTime());
         }
@@ -178,7 +178,7 @@ public class OwnerStatsService {
                 response.setLastVisitDate(lastVisitDate.orElse(null));
 
                 // Get latest session info
-                List<GymSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(user.getId(), gymId);
+                List<GymMembershipSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(user.getId(), gymId);
                 if (!latestSessions.isEmpty()) {
                     response.setLastCheckIn(latestSessions.get(0).getCheckInTime());
                 }
@@ -226,7 +226,7 @@ public class OwnerStatsService {
                 response.setLastVisitDate(lastVisitDate.orElse(null));
 
                 // Get latest session info
-                List<GymSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(user.getId(), facility.getGymId());
+                List<GymMembershipSession> latestSessions = gymSessionRepository.findLatestSessionsByUserAndGym(user.getId(), facility.getGymId());
                 if (!latestSessions.isEmpty()) {
                     response.setLastCheckIn(latestSessions.get(0).getCheckInTime());
                 }

@@ -21,7 +21,6 @@ public class MembershipSwitchService {
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
     private final OwnerEarningRepository ownerEarningRepository;
-    private final GymSessionRepository sessionRepository;
     private final EmailService emailService;
 
     public MembershipSwitchService(MembershipRepository membershipRepository,
@@ -30,7 +29,6 @@ public class MembershipSwitchService {
                                  UserWalletRepository walletRepository,
                                  WalletTransactionRepository transactionRepository,
                                  OwnerEarningRepository ownerEarningRepository,
-                                 GymSessionRepository sessionRepository,
                                  EmailService emailService) {
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
@@ -38,7 +36,6 @@ public class MembershipSwitchService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.ownerEarningRepository = ownerEarningRepository;
-        this.sessionRepository = sessionRepository;
         this.emailService = emailService;
     }
 

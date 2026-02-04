@@ -3,6 +3,7 @@ package com.techtammina.fitSwitch.controller;
 import com.techtammina.fitSwitch.dto.UserMembershipHistoryResponse;
 import com.techtammina.fitSwitch.dto.UserFacilityHistoryResponse;
 import com.techtammina.fitSwitch.dto.UserSessionHistoryResponse;
+import com.techtammina.fitSwitch.dto.FacilitySessionHistoryResponse;
 import com.techtammina.fitSwitch.entity.User;
 import com.techtammina.fitSwitch.repository.UserRepository;
 import com.techtammina.fitSwitch.service.UserHistoryService;
@@ -48,6 +49,13 @@ public class UserHistoryController {
     public ResponseEntity<List<UserSessionHistoryResponse>> getSessionHistory(Authentication auth) {
         Long userId = getUserId(auth);
         List<UserSessionHistoryResponse> history = userHistoryService.getSessionHistory(userId);
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/facility-sessions")
+    public ResponseEntity<List<FacilitySessionHistoryResponse>> getFacilitySessionHistory(Authentication auth) {
+        Long userId = getUserId(auth);
+        List<FacilitySessionHistoryResponse> history = userHistoryService.getFacilitySessionHistory(userId);
         return ResponseEntity.ok(history);
     }
 }

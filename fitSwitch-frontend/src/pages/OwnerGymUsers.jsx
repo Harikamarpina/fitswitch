@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getGymUsers } from "../api/statsApi";
 import { getGymPlans } from "../api/planApi";
-import { getGymPlanUsers } from "../api/facilityApi";
+import { getGymPlanUsers, getGymFacilitiesOwner, getFacilityPlanUsers } from "../api/facilityApi";
+import { getGymFacilityPlans } from "../api/facilityApi";
 
 export default function OwnerGymUsers() {
   const { gymId } = useParams();
@@ -28,22 +29,45 @@ export default function OwnerGymUsers() {
         return;
       }
       
-      // If empty, try to get users from gym plans
-      const plansResponse = await getGymPlans(gymId);
-      const plans = plansResponse?.data || [];
-      
       let allUsers = [];
-      for (const plan of plans) {
-        try {
-          const planUsersResponse = await getGymPlanUsers(gymId, plan.id);
-          const planUsers = planUsersResponse?.data || [];
-          allUsers = allUsers.concat(planUsers);
-        } catch (err) {
-          console.warn(`Failed to fetch users for plan ${plan.id}`);
+      
+      // Get users from gym membership plans
+      try {
+        const plansResponse = await getGymPlans(gymId);
+        const plans = plansResponse?.data || [];
+        
+        for (const plan of plans) {
+          try {
+            const planUsersResponse = await getGymPlanUsers(gymId, plan.id);
+            const planUsers = planUsersResponse?.data || [];
+            allUsers = allUsers.concat(planUsers);
+          } catch (err) {
+            console.warn(`Failed to fetch users for gym plan ${plan.id}`);
+          }
         }
+      } catch (err) {
+        console.warn('Failed to fetch gym plans');
       }
       
-      // Remove duplicates
+      // Get users from facility plans
+      try {
+        const facilityPlansResponse = await getGymFacilityPlans(gymId);
+        const facilityPlans = facilityPlansResponse?.data || [];
+        
+        for (const facilityPlan of facilityPlans) {
+          try {
+            const facilityUsersResponse = await getFacilityPlanUsers(gymId, facilityPlan.facilityId, facilityPlan.id);
+            const facilityUsers = facilityUsersResponse?.data || [];
+            allUsers = allUsers.concat(facilityUsers);
+          } catch (err) {
+            console.warn(`Failed to fetch users for facility plan ${facilityPlan.id}`);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch facility plans');
+      }
+      
+      // Remove duplicates based on userId
       const uniqueUsers = allUsers.filter((user, index, self) => 
         index === self.findIndex(u => u.userId === user.userId)
       );
@@ -84,6 +108,12 @@ export default function OwnerGymUsers() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-4"
+            >
+              <span>←</span> Back to Dashboard
+            </Link>
             <h2 className="text-4xl font-extrabold tracking-tight">Gym Members</h2>
             <p className="text-zinc-400 mt-2 text-lg">Detailed overview of your gym's community and active subscribers.</p>
           </div>
@@ -181,14 +211,6 @@ export default function OwnerGymUsers() {
           </div>
         )}
 
-        <div className="mt-16 pt-8 border-t border-zinc-900">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
-          >
-            <span>←</span> Back to Dashboard
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -37,22 +37,22 @@ export default function DigitalCard() {
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
 
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
+            <Link
+              to={getDashboardRoute()}
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-4"
+            >
+              <span>←</span> Back to Dashboard
+            </Link>
             <h1 className="text-4xl font-bold tracking-tight">Digital Fitness Card</h1>
             <p className="text-zinc-400 mt-2 text-lg">
               Your all-access pass to the FitSwitch network.
             </p>
           </div>
-          <Link
-            to={getDashboardRoute()}
-            className="text-sm font-medium text-zinc-500 hover:text-white transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
         </div>
 
         {error && (
@@ -65,7 +65,7 @@ export default function DigitalCard() {
           <div className="space-y-8">
             {/* Digital Card */}
             <div className="relative">
-              <div className="bg-gradient-to-br from-lime-500 to-lime-600 rounded-[2rem] p-8 text-black relative overflow-hidden shadow-2xl shadow-lime-500/20">
+              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-[2rem] p-8 text-black relative overflow-hidden shadow-2xl shadow-cyan-500/20">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-12 -translate-x-12"></div>
                 
@@ -180,11 +180,7 @@ export default function DigitalCard() {
           </div>
         )}
 
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-          <Link to={getDashboardRoute()} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
-            ← Return to Dashboard
-          </Link>
-        </div>
+        <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
     </div>
   );

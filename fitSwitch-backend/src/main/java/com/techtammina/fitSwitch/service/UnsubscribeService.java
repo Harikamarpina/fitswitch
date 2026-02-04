@@ -24,6 +24,10 @@ public class UnsubscribeService {
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
     private final OwnerEarningRepository ownerEarningRepository;
+    private final EmailService emailService;
+
+    private static final BigDecimal USER_REFUND_RATE = new BigDecimal("0.40");
+    private static final BigDecimal OWNER_SHARE_RATE = new BigDecimal("0.60");
 
     public UnsubscribeService(UnsubscribeRequestRepository unsubscribeRequestRepository,
                             MembershipRepository membershipRepository,
@@ -32,7 +36,8 @@ public class UnsubscribeService {
                             UserRepository userRepository,
                             UserWalletRepository walletRepository,
                             WalletTransactionRepository transactionRepository,
-                            OwnerEarningRepository ownerEarningRepository) {
+                            OwnerEarningRepository ownerEarningRepository,
+                            EmailService emailService) {
         this.unsubscribeRequestRepository = unsubscribeRequestRepository;
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
@@ -41,6 +46,7 @@ public class UnsubscribeService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.ownerEarningRepository = ownerEarningRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -85,6 +91,8 @@ public class UnsubscribeService {
         unsubscribeRequest.setStatus(UnsubscribeRequest.RequestStatus.PENDING);
         unsubscribeRequest.setRequestDate(LocalDateTime.now());
         unsubscribeRequest.setRefundAmount(calculation.getRefundAmount());
+        unsubscribeRequest.setRemainingAmount(calculation.getRemainingAmount());
+        unsubscribeRequest.setOwnerShare(calculation.getOwnerShare());
         unsubscribeRequest.setUsedMonths(calculation.getUsedMonths());
         unsubscribeRequest.setTotalMonths(plan.getDurationMonths());
         unsubscribeRequest.setReason(request.getReason());
@@ -92,6 +100,33 @@ public class UnsubscribeService {
         unsubscribeRequestRepository.save(unsubscribeRequest);
 
         return new ApiResponse(true, "Unsubscribe request submitted successfully. Awaiting owner approval.");
+    }
+
+    public RefundCalculationResponse getRefundCalculation(Long userId, Long membershipId) {
+        Membership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new RuntimeException("Membership not found"));
+
+        if (!membership.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized access to membership");
+        }
+
+        if (membership.getStatus() != MembershipStatus.ACTIVE) {
+            throw new RuntimeException("Only active memberships can be calculated for refund");
+        }
+
+        GymPlan plan = gymPlanRepository.findById(membership.getPlanId())
+                .orElseThrow(() -> new RuntimeException("Plan not found"));
+
+        RefundCalculation calculation = calculateRefund(membership, plan);
+        
+        RefundCalculationResponse response = new RefundCalculationResponse();
+        response.setRefundAmount(calculation.getRefundAmount());
+        response.setRemainingAmount(calculation.getRemainingAmount());
+        response.setOwnerShare(calculation.getOwnerShare());
+        response.setUsedMonths(calculation.getUsedMonths());
+        response.setRemainingMonths(calculation.getRemainingMonths());
+        
+        return response;
     }
 
     public List<UnsubscribeRequestResponse> getOwnerUnsubscribeRequests(Long ownerId) {
@@ -133,16 +168,56 @@ public class UnsubscribeService {
         request.setOwnerNotes(approval.getOwnerNotes());
         unsubscribeRequestRepository.save(request);
 
-        // Process refund
-        processRefund(request);
-
         // Update membership status
         Membership membership = membershipRepository.findById(request.getMembershipId())
                 .orElseThrow(() -> new RuntimeException("Membership not found"));
         membership.setStatus(MembershipStatus.EXPIRED);
         membershipRepository.save(membership);
 
-        return new ApiResponse(true, "Unsubscribe request approved and refund processed");
+        return new ApiResponse(true, "Unsubscribe request approved. Refund must be processed separately.");
+    }
+
+    @Transactional
+    public ApiResponse processRefund(Long ownerId, Long requestId) {
+        UnsubscribeRequest request = unsubscribeRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Unsubscribe request not found"));
+
+        if (!request.getOwnerId().equals(ownerId)) {
+            throw new RuntimeException("Unauthorized access to request");
+        }
+
+        if (request.getStatus() != UnsubscribeRequest.RequestStatus.APPROVED) {
+            throw new RuntimeException("Request must be approved first");
+        }
+
+        if (request.getRefundAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("No refund applicable");
+        }
+
+        UserWallet ownerWallet = walletRepository.findByUserId(request.getOwnerId())
+                .orElseGet(() -> createWallet(request.getOwnerId()));
+
+        if (ownerWallet.getBalance().compareTo(request.getRefundAmount()) < 0) {
+            processDelayedRefund(request, ownerWallet);
+            request.setStatus(UnsubscribeRequest.RequestStatus.REFUNDED);
+            unsubscribeRequestRepository.save(request);
+            return new ApiResponse(true, "Refund initiated. Owner wallet balance insufficient; user credited and owner will settle within 2-4 business days.");
+        }
+
+        processImmediateRefund(request, ownerWallet);
+        request.setStatus(UnsubscribeRequest.RequestStatus.REFUNDED);
+        unsubscribeRequestRepository.save(request);
+        return new ApiResponse(true, "Refund processed successfully.");
+    }
+
+    public List<UnsubscribeRequestResponse> getApprovedRefundRequests(Long ownerId) {
+        List<UnsubscribeRequest> requests = unsubscribeRequestRepository
+                .findByOwnerIdAndStatusOrderByApprovalDateDesc(ownerId, UnsubscribeRequest.RequestStatus.APPROVED);
+
+        return requests.stream()
+                .filter(request -> request.getRefundAmount().compareTo(BigDecimal.ZERO) > 0)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -172,57 +247,211 @@ public class UnsubscribeService {
     private RefundCalculation calculateRefund(Membership membership, GymPlan plan) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate = membership.getStartDate().atStartOfDay();
+        LocalDateTime endDate = membership.getEndDate().atStartOfDay();
         
-        // Calculate months used (any partial month counts as full month for owner)
-        long daysUsed = ChronoUnit.DAYS.between(startDate, now);
-        int monthsUsed = (int) Math.ceil((double) daysUsed / 30.0); // Round up partial months
+        // Calculate total days and used days (count today as 1 day if within range)
+        long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
+        long usedDays = ChronoUnit.DAYS.between(membership.getStartDate(), now.toLocalDate()) + 1;
         
-        // Ensure we don't exceed total months
-        if (monthsUsed > plan.getDurationMonths()) {
-            monthsUsed = plan.getDurationMonths();
-        }
+        // Clamp used days between 0 and total days
+        if (usedDays < 0) usedDays = 0;
+        if (usedDays > totalDays) usedDays = totalDays;
+        
+        // Per-day amount (2-decimal rounding, as shown in example)
+        BigDecimal dailyRate = plan.getPrice().divide(
+                BigDecimal.valueOf(totalDays), 2, RoundingMode.HALF_UP);
 
-        int remainingMonths = plan.getDurationMonths() - monthsUsed;
+        // Used amount = per-day * used days
+        BigDecimal usedAmount = dailyRate.multiply(BigDecimal.valueOf(usedDays))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // Remaining amount = total fee - used amount
+        BigDecimal remainingAmount = plan.getPrice().subtract(usedAmount)
+                .setScale(2, RoundingMode.HALF_UP);
+        if (remainingAmount.compareTo(BigDecimal.ZERO) < 0) {
+            remainingAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
         
-        // Calculate refund amount
-        BigDecimal monthlyRate = plan.getPrice().divide(
-                BigDecimal.valueOf(plan.getDurationMonths()), 2, RoundingMode.HALF_UP);
-        BigDecimal refundAmount = monthlyRate.multiply(BigDecimal.valueOf(remainingMonths));
+        // User gets 40% of remaining amount as refund
+        BigDecimal userRefund = remainingAmount.multiply(USER_REFUND_RATE)
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal ownerShare = remainingAmount.multiply(OWNER_SHARE_RATE)
+                .setScale(2, RoundingMode.HALF_UP);
+        
+        // Calculate months for display
+        int monthsUsed = (int) Math.ceil((double) usedDays / 30.0);
+        int remainingMonths = Math.max(0, plan.getDurationMonths() - monthsUsed);
 
         RefundCalculation calculation = new RefundCalculation();
         calculation.setUsedMonths(monthsUsed);
         calculation.setRemainingMonths(remainingMonths);
-        calculation.setRefundAmount(refundAmount);
-        calculation.setMonthlyRate(monthlyRate);
+        calculation.setRemainingAmount(remainingAmount);
+        calculation.setRefundAmount(userRefund);
+        calculation.setOwnerShare(ownerShare);
         
         return calculation;
     }
 
-    private void processRefund(UnsubscribeRequest request) {
+    private String processRefundWithWalletCheck(UnsubscribeRequest request) {
         if (request.getRefundAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            return; // No refund needed
+            return "No refund applicable.";
         }
 
+        UserWallet ownerWallet = walletRepository.findByUserId(request.getOwnerId())
+                .orElseGet(() -> createWallet(request.getOwnerId()));
+
+        if (ownerWallet.getBalance().compareTo(request.getRefundAmount()) < 0) {
+            throw new RuntimeException("Insufficient wallet balance. Please add funds to process refund.");
+        }
+
+        processImmediateRefund(request, ownerWallet);
+        return "Refund processed successfully.";
+    }
+
+    private void processImmediateRefund(UnsubscribeRequest request, UserWallet ownerWallet) {
+        // Debit owner wallet
+        ownerWallet.setBalance(ownerWallet.getBalance().subtract(request.getRefundAmount()));
+        walletRepository.save(ownerWallet);
+
+        // Create owner debit transaction
+        WalletTransaction ownerTransaction = new WalletTransaction();
+        ownerTransaction.setUserId(request.getOwnerId());
+        ownerTransaction.setWalletId(ownerWallet.getId());
+        ownerTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
+        ownerTransaction.setAmount(request.getRefundAmount().negate());
+        ownerTransaction.setBalanceAfter(ownerWallet.getBalance());
+        ownerTransaction.setDescription("Membership refund debit");
+        ownerTransaction.setMembershipId(request.getMembershipId());
+        ownerTransaction.setGymId(request.getGymId());
+        ownerTransaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerTransaction);
+
+        // Record owner earning refund (negative)
+        OwnerEarning refundEarning = new OwnerEarning();
+        refundEarning.setOwnerId(request.getOwnerId());
+        refundEarning.setGymId(request.getGymId());
+        refundEarning.setUserId(request.getUserId());
+        refundEarning.setType(OwnerEarning.EarningType.MEMBERSHIP_REFUND);
+        refundEarning.setAmount(request.getRefundAmount().negate());
+        refundEarning.setDescription("Membership refund debit");
+        refundEarning.setMembershipId(request.getMembershipId());
+        refundEarning.setCreatedAt(LocalDateTime.now());
+        ownerEarningRepository.save(refundEarning);
+
         // Get or create user wallet
-        UserWallet wallet = walletRepository.findByUserId(request.getUserId())
+        UserWallet userWallet = walletRepository.findByUserId(request.getUserId())
                 .orElseGet(() -> createWallet(request.getUserId()));
 
         // Credit user wallet
-        wallet.setBalance(wallet.getBalance().add(request.getRefundAmount()));
-        walletRepository.save(wallet);
+        userWallet.setBalance(userWallet.getBalance().add(request.getRefundAmount()));
+        walletRepository.save(userWallet);
 
-        // Create wallet transaction
-        WalletTransaction transaction = new WalletTransaction();
-        transaction.setUserId(request.getUserId());
-        transaction.setWalletId(wallet.getId());
-        transaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
-        transaction.setAmount(request.getRefundAmount());
-        transaction.setBalanceAfter(wallet.getBalance());
-        transaction.setDescription("Membership unsubscribe refund");
-        transaction.setMembershipId(request.getMembershipId());
-        transaction.setGymId(request.getGymId());
-        transaction.setCreatedAt(LocalDateTime.now());
-        transactionRepository.save(transaction);
+        // Create user credit transaction
+        WalletTransaction userTransaction = new WalletTransaction();
+        userTransaction.setUserId(request.getUserId());
+        userTransaction.setWalletId(userWallet.getId());
+        userTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
+        userTransaction.setAmount(request.getRefundAmount());
+        userTransaction.setBalanceAfter(userWallet.getBalance());
+        userTransaction.setDescription("Membership unsubscribe refund");
+        userTransaction.setMembershipId(request.getMembershipId());
+        userTransaction.setGymId(request.getGymId());
+        userTransaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(userTransaction);
+
+        // Send email notification to user
+        sendRefundNotificationToUser(request, true);
+    }
+
+    private void processDelayedRefund(UnsubscribeRequest request, UserWallet ownerWallet) {
+        // Update owner wallet to negative balance
+        ownerWallet.setBalance(ownerWallet.getBalance().subtract(request.getRefundAmount()));
+        walletRepository.save(ownerWallet);
+
+        // Create owner debit transaction
+        WalletTransaction ownerTransaction = new WalletTransaction();
+        ownerTransaction.setUserId(request.getOwnerId());
+        ownerTransaction.setWalletId(ownerWallet.getId());
+        ownerTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
+        ownerTransaction.setAmount(request.getRefundAmount().negate());
+        ownerTransaction.setBalanceAfter(ownerWallet.getBalance());
+        ownerTransaction.setDescription("Membership refund debit - insufficient balance");
+        ownerTransaction.setMembershipId(request.getMembershipId());
+        ownerTransaction.setGymId(request.getGymId());
+        ownerTransaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerTransaction);
+
+        // Record owner earning refund (negative)
+        OwnerEarning refundEarning = new OwnerEarning();
+        refundEarning.setOwnerId(request.getOwnerId());
+        refundEarning.setGymId(request.getGymId());
+        refundEarning.setUserId(request.getUserId());
+        refundEarning.setType(OwnerEarning.EarningType.MEMBERSHIP_REFUND);
+        refundEarning.setAmount(request.getRefundAmount().negate());
+        refundEarning.setDescription("Membership refund debit - insufficient balance");
+        refundEarning.setMembershipId(request.getMembershipId());
+        refundEarning.setCreatedAt(LocalDateTime.now());
+        ownerEarningRepository.save(refundEarning);
+
+        // Get or create user wallet and credit immediately
+        UserWallet userWallet = walletRepository.findByUserId(request.getUserId())
+                .orElseGet(() -> createWallet(request.getUserId()));
+
+        // Credit user wallet immediately
+        userWallet.setBalance(userWallet.getBalance().add(request.getRefundAmount()));
+        walletRepository.save(userWallet);
+
+        // Create user credit transaction
+        WalletTransaction userTransaction = new WalletTransaction();
+        userTransaction.setUserId(request.getUserId());
+        userTransaction.setWalletId(userWallet.getId());
+        userTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
+        userTransaction.setAmount(request.getRefundAmount());
+        userTransaction.setBalanceAfter(userWallet.getBalance());
+        userTransaction.setDescription("Membership refund - owner will settle within 2-4 days");
+        userTransaction.setMembershipId(request.getMembershipId());
+        userTransaction.setGymId(request.getGymId());
+        userTransaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(userTransaction);
+        
+        // Send notifications
+        sendRefundNotificationToUser(request, false);
+        sendBalanceNotificationToOwner(request);
+    }
+
+    private void sendRefundNotificationToUser(UnsubscribeRequest request, boolean isImmediate) {
+        try {
+            userRepository.findById(request.getUserId()).ifPresent(user -> {
+                gymRepository.findById(request.getGymId()).ifPresent(gym -> {
+                    emailService.sendRefundNotification(
+                        user.getEmail(),
+                        gym.getGymName(),
+                        request.getRefundAmount(),
+                        isImmediate
+                    );
+                });
+            });
+        } catch (Exception e) {
+            // Log error but don't fail the transaction
+            System.err.println("Failed to send refund notification: " + e.getMessage());
+        }
+    }
+
+    private void sendBalanceNotificationToOwner(UnsubscribeRequest request) {
+        try {
+            userRepository.findById(request.getOwnerId()).ifPresent(owner -> {
+                gymRepository.findById(request.getGymId()).ifPresent(gym -> {
+                    emailService.sendOwnerBalanceNotification(
+                        owner.getEmail(),
+                        gym.getGymName(),
+                        request.getRefundAmount()
+                    );
+                });
+            });
+        } catch (Exception e) {
+            // Log error but don't fail the transaction
+            System.err.println("Failed to send owner balance notification: " + e.getMessage());
+        }
     }
 
     private UserWallet createWallet(Long userId) {
@@ -239,6 +468,18 @@ public class UnsubscribeService {
         response.setRequestDate(request.getRequestDate());
         response.setApprovalDate(request.getApprovalDate());
         response.setRefundAmount(request.getRefundAmount());
+        if (request.getRemainingAmount() != null && request.getOwnerShare() != null) {
+            response.setRemainingAmount(request.getRemainingAmount());
+            response.setOwnerShare(request.getOwnerShare());
+        } else if (request.getRefundAmount() != null) {
+            BigDecimal remainingAmount = request.getRefundAmount()
+                    .divide(USER_REFUND_RATE, 2, RoundingMode.HALF_UP);
+            BigDecimal ownerShare = remainingAmount
+                    .multiply(OWNER_SHARE_RATE)
+                    .setScale(2, RoundingMode.HALF_UP);
+            response.setRemainingAmount(remainingAmount);
+            response.setOwnerShare(ownerShare);
+        }
         response.setUsedMonths(request.getUsedMonths());
         response.setTotalMonths(request.getTotalMonths());
         response.setReason(request.getReason());
@@ -270,7 +511,8 @@ public class UnsubscribeService {
         private int usedMonths;
         private int remainingMonths;
         private BigDecimal refundAmount;
-        private BigDecimal monthlyRate;
+        private BigDecimal remainingAmount;
+        private BigDecimal ownerShare;
 
         public int getUsedMonths() { return usedMonths; }
         public void setUsedMonths(int usedMonths) { this.usedMonths = usedMonths; }
@@ -281,7 +523,10 @@ public class UnsubscribeService {
         public BigDecimal getRefundAmount() { return refundAmount; }
         public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
 
-        public BigDecimal getMonthlyRate() { return monthlyRate; }
-        public void setMonthlyRate(BigDecimal monthlyRate) { this.monthlyRate = monthlyRate; }
+        public BigDecimal getRemainingAmount() { return remainingAmount; }
+        public void setRemainingAmount(BigDecimal remainingAmount) { this.remainingAmount = remainingAmount; }
+
+        public BigDecimal getOwnerShare() { return ownerShare; }
+        public void setOwnerShare(BigDecimal ownerShare) { this.ownerShare = ownerShare; }
     }
 }

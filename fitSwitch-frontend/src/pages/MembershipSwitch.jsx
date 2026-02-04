@@ -289,11 +289,7 @@ export default function MembershipSwitch() {
           </div>
         )}
 
-        <div className="mt-20 text-center">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium">
-            <span>←</span> Back to Dashboard
-          </Link>
-        </div>
+        <div className="mt-20"></div>
       </div>
     </div>
   );

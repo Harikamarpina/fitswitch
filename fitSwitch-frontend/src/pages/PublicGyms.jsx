@@ -103,7 +103,7 @@ export default function PublicGyms() {
         </div>
 
         <div className="mt-20 text-center">
-          <Link to="/" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors inline-flex items-center gap-2 group">
+          <Link to="/dashboard" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors inline-flex items-center gap-2 group">
             <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Home
           </Link>
         </div>

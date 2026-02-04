@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
+import { checkInToMembership, checkOutFromMembership, getMembershipSession } from "../api/sessionApi";
 
 export default function UserGymVisit() {
   const { gymId } = useParams();
@@ -38,6 +39,18 @@ export default function UserGymVisit() {
           gymName: activeMembership.gymName,
           gymId: activeMembership.gymId
         });
+
+        try {
+          const sessionRes = await getMembershipSession(activeMembership.id);
+          const sessionData = sessionRes.data;
+          if (sessionData?.status === "ACTIVE") {
+            setActiveVisit(sessionData);
+          } else {
+            setActiveVisit(null);
+          }
+        } catch (err) {
+          setActiveVisit(null);
+        }
       } else {
         // Still set gym object even if no membership, so we don't show "gym not found"
         const anyMembership = membershipsRes.data.find(m => m.gymId == gymId);
@@ -46,6 +59,7 @@ export default function UserGymVisit() {
             gymName: anyMembership.gymName,
             gymId: anyMembership.gymId
           });
+          setActiveVisit(null);
         } else {
           setError("No membership found for this gym");
         }
@@ -65,9 +79,7 @@ export default function UserGymVisit() {
     setSuccess("");
 
     try {
-      const response = await axiosInstance.post("/user/visit/check-in", {
-        gymId: parseInt(gymId)
-      });
+      const response = await checkInToMembership(membership.id);
       
       setActiveVisit(response.data);
       setSuccess("Successfully checked in! Enjoy your workout.");
@@ -85,7 +97,7 @@ export default function UserGymVisit() {
     setSuccess("");
 
     try {
-      const response = await axiosInstance.post("/user/visit/check-out");
+      const response = await checkOutFromMembership(membership.id);
       
       setActiveVisit(response.data);
       setSuccess("Successfully checked out! Great workout session.");
@@ -119,9 +131,15 @@ export default function UserGymVisit() {
   if (!gym && !loading) {
     return (
       <div className="min-h-screen bg-black text-white px-6 py-10">
-        <div className="max-w-2xl mx-auto text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <Link to="/user/dashboard" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors">
+              ← Back to Dashboard
+            </Link>
+          </div>
           <div className="text-6xl mb-6 opacity-20">🚫</div>
-          <h2 className="text-2xl font-bold mb-2">No Membership Found</h2>
+          <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
+            <h2 className="text-2xl font-bold mb-2">No Membership Found</h2>
           <p className="text-zinc-500 mb-8 max-w-sm mx-auto">
             You need an active membership to access this gym's session controls.
           </p>
@@ -131,10 +149,6 @@ export default function UserGymVisit() {
           >
             Browse Gyms
           </Link>
-          <div className="mt-8">
-            <Link to="/user/dashboard" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors">
-              ← Return to Dashboard
-            </Link>
           </div>
         </div>
       </div>
@@ -285,11 +299,7 @@ export default function UserGymVisit() {
           )}
         </div>
 
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-          <Link to="/user/dashboard" className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
-            ← Return to Dashboard
-          </Link>
-        </div>
+        <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
     </div>
   );

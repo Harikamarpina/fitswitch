@@ -26,17 +26,17 @@ export default function GymsList() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
+            <Link
+              to="/user/dashboard"
+              className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors flex items-center gap-2 group mb-4"
+            >
+              <span className="group-hover:-translate-x-1 transition-transform">â†</span> Back to Dashboard
+            </Link>
             <h1 className="text-4xl font-bold tracking-tight">Browse Gyms</h1>
             <p className="text-zinc-400 mt-2 text-lg">
               Explore our network of professional fitness centers.
             </p>
           </div>
-          <Link
-            to="/user/dashboard"
-            className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors flex items-center gap-2 group"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
-          </Link>
         </div>
 
         {loading && (

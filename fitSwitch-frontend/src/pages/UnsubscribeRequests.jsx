@@ -19,9 +19,11 @@ export default function UnsubscribeRequests() {
     try {
       setLoading(true);
       const response = await getOwnerUnsubscribeRequests();
-      setRequests(response);
+      console.log('Unsubscribe requests response:', response);
+      setRequests(response.data || response || []);
     } catch (err) {
-      setError(err.message || "Failed to load unsubscribe requests");
+      console.error('Error fetching requests:', err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -32,11 +34,19 @@ export default function UnsubscribeRequests() {
       setProcessing(prev => ({ ...prev, [requestId]: true }));
       setError("");
       await approveUnsubscribeRequest(requestId, ownerNotes);
+      setError({
+        type: 'success',
+        message: 'Request approved. Refund equals 40% of the remaining value (cancellation fee applies) and must be processed separately.'
+      });
+      
       await fetchRequests();
       setSelectedRequest(null);
       setOwnerNotes("");
     } catch (err) {
-      setError(err.message || "Failed to approve request");
+      setError({
+        type: 'error',
+        message: err.message || "Failed to approve request"
+      });
     } finally {
       setProcessing(prev => ({ ...prev, [requestId]: false }));
     }
@@ -47,11 +57,18 @@ export default function UnsubscribeRequests() {
       setProcessing(prev => ({ ...prev, [requestId]: true }));
       setError("");
       await rejectUnsubscribeRequest(requestId, ownerNotes);
+      setError({
+        type: 'info',
+        message: 'Request rejected successfully. The user has been notified.'
+      });
       await fetchRequests();
       setSelectedRequest(null);
       setOwnerNotes("");
     } catch (err) {
-      setError(err.message || "Failed to reject request");
+      setError({
+        type: 'error',
+        message: err.message || "Failed to reject request"
+      });
     } finally {
       setProcessing(prev => ({ ...prev, [requestId]: false }));
     }
@@ -69,6 +86,8 @@ export default function UnsubscribeRequests() {
         return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'APPROVED':
         return 'text-lime-400 bg-lime-400/10 border-lime-400/20';
+      case 'REFUNDED':
+        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
       case 'REJECTED':
         return 'text-red-400 bg-red-400/10 border-red-400/20';
       default:
@@ -121,11 +140,24 @@ export default function UnsubscribeRequests() {
         </div>
 
         {error && (
-          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl flex items-center gap-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className={`mb-8 px-6 py-4 rounded-2xl flex items-center gap-3 ${
+            error.type === 'success' ? 'bg-lime-400/10 border border-lime-400/20 text-lime-400' :
+            error.type === 'warning' ? 'bg-amber-400/10 border border-amber-400/20 text-amber-400' :
+            error.type === 'info' ? 'bg-blue-400/10 border border-blue-400/20 text-blue-400' :
+            'bg-red-500/10 border border-red-500/20 text-red-400'
+          }`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {error.type === 'success' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              ) : error.type === 'warning' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              ) : error.type === 'info' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              )}
             </svg>
-            <span className="text-sm font-medium">{error}</span>
+            <span className="text-sm font-medium">{error.message || error}</span>
           </div>
         )}
 
@@ -193,9 +225,21 @@ export default function UnsubscribeRequests() {
                     </div>
 
                     <div className="bg-zinc-800/30 p-6 rounded-2xl border border-zinc-800/50 flex flex-col justify-center">
-                      <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Estimated Refund</div>
-                      <div className="text-3xl font-black text-lime-400">₹{request.refundAmount.toFixed(2)}</div>
-                      <div className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-tighter italic">* Pro-rated calculation</div>
+                      <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Refund Breakdown</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-400">Remaining Amount:</span>
+                          <span className="text-zinc-200 font-semibold">₹{request.remainingAmount?.toFixed(2) || '0.00'}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-400">Owner Share (60%):</span>
+                          <span className="text-lime-400 font-bold">₹{request.ownerShare?.toFixed(2) || '0.00'}</span>
+                        </div>
+                        <div className="flex justify-between text-sm border-t border-zinc-700 pt-2">
+                          <span className="text-zinc-400">User Refund (40%):</span>
+                          <span className="text-orange-400 font-bold">₹{request.refundAmount?.toFixed(2) || '0.00'}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -277,8 +321,8 @@ export default function UnsubscribeRequests() {
                 {actionType === 'approve' ? 'Approve Cancellation?' : 'Reject Request?'}
               </h3>
               <p className="text-zinc-400 mb-8 leading-relaxed">
-                {actionType === 'approve' 
-                  ? `You are about to approve the cancellation. A refund of ₹${selectedRequest.refundAmount.toFixed(2)} will be credited back to ${selectedRequest.userName}'s wallet.`
+                {actionType === 'approve'
+                  ? 'You are about to approve the cancellation. Refund equals 40% of the remaining value (cancellation fee applies). Refund processing is a separate step after approval.'
                   : `Rejecting this request will keep the subscription active for ${selectedRequest.userName}. This action can be reversed by the user submitting a new request.`
                 }
               </p>

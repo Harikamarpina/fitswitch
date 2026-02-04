@@ -35,6 +35,12 @@ export default function GymFacilities() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-4"
+            >
+              <span>←</span> Back to Dashboard
+            </Link>
             <h2 className="text-4xl font-extrabold tracking-tight">Gym Facilities</h2>
             <p className="text-zinc-400 mt-2 text-lg">
               Manage services and amenities available in your facility.
@@ -121,14 +127,6 @@ export default function GymFacilities() {
           </div>
         )}
 
-        <div className="mt-12 pt-8 border-t border-zinc-900">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
-          >
-            <span>←</span> Back to Dashboard
-          </Link>
-        </div>
       </div>
     </div>
   );

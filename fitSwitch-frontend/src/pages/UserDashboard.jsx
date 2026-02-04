@@ -2,29 +2,38 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { getUserDashboardStats } from "../api/statsApi";
+import { getUserUnsubscribeRequests } from "../api/unsubscribeApi";
 import { getDashboardRoute } from "../utils/navigation";
 import UserSessionCard from "./UserSessionCard";
 import FacilitySessionCard from "./FacilitySessionCard";
+import UnsubscribeModal from "../components/UnsubscribeModal";
+import CancellationNotificationCard from "../components/CancellationNotificationCard";
 
 export default function UserDashboard() {
   const [memberships, setMemberships] = useState([]);
   const [facilitySubscriptions, setFacilitySubscriptions] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [cancellationRequests, setCancellationRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeSessions, setActiveSessions] = useState({});
+  const [selectedMembership, setSelectedMembership] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [dismissedNotifications, setDismissedNotifications] = useState(new Set());
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membershipsRes, facilityRes, statsRes] = await Promise.all([
+        const [membershipsRes, facilityRes, statsRes, cancellationRes] = await Promise.all([
           axiosInstance.get("/user/memberships"),
           axiosInstance.get("/user/facility/subscriptions"),
-          getUserDashboardStats()
+          getUserDashboardStats(),
+          getUserUnsubscribeRequests().catch(() => ({ data: [] })) // Handle gracefully if API doesn't exist yet
         ]);
         setMemberships(membershipsRes.data || []);
         setFacilitySubscriptions(facilityRes.data || []);
         setDashboardStats(statsRes.data);
+        setCancellationRequests(cancellationRes.data || []);
       } catch (err) {
         setError("Failed to load dashboard data");
       } finally {
@@ -41,6 +50,15 @@ export default function UserDashboard() {
       [gymId]: sessionData
     }));
   };
+
+  const handleDismissNotification = (requestId) => {
+    setDismissedNotifications(prev => new Set([...prev, requestId]));
+  };
+
+  // Filter out pending requests and dismissed notifications
+  const visibleNotifications = cancellationRequests.filter(
+    request => request.status !== 'PENDING' && !dismissedNotifications.has(request.id)
+  );
 
   if (loading) {
     return (
@@ -84,16 +102,86 @@ export default function UserDashboard() {
               Switch
             </Link>
             <Link
-              to="/gyms/map"
-              className="px-5 py-2.5 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-400 transition-all active:scale-95 shadow-lg shadow-purple-500/10"
-            >
-              Find Gyms
-            </Link>
-            <Link
               to="/gyms"
               className="px-5 py-2.5 rounded-xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-95 shadow-lg shadow-lime-500/10"
             >
               Browse Gyms
+            </Link>
+          </div>
+        </div>
+
+        {successMessage && (
+          <div className="mb-8 bg-lime-500/10 border border-lime-500/20 text-lime-500 p-4 rounded-2xl text-sm font-bold flex items-center justify-between">
+            <span>{successMessage}</span>
+            <button onClick={() => setSuccessMessage("")} className="text-lime-500/50 hover:text-lime-500">✕</button>
+          </div>
+        )}
+
+        {/* Cancellation Notifications */}
+        {visibleNotifications.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-4 mb-6">
+              <h2 className="text-xl font-bold">Cancellation Updates</h2>
+              <div className="h-px flex-1 bg-zinc-800"></div>
+            </div>
+            <div className="space-y-4">
+              {visibleNotifications.map((request) => (
+                <CancellationNotificationCard
+                  key={request.id}
+                  request={request}
+                  onDismiss={() => handleDismissNotification(request.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Member Portal Cards */}
+        <div className="mb-12">
+          <div className="flex items-center gap-4 mb-6">
+            <h2 className="text-2xl font-bold">Member Portal</h2>
+            <div className="h-px flex-1 bg-zinc-800"></div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link
+              to="/user/cancellation-requests"
+              className="group bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">My Requests</h3>
+                  <p className="text-zinc-500 text-sm">Track cancellation status</p>
+                </div>
+              </div>
+              <div className="text-xs text-zinc-600 group-hover:text-zinc-400 transition-colors">
+                View your membership cancellation requests and owner responses
+              </div>
+            </Link>
+
+            <Link
+              to="/gyms/map"
+              className="group bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">Find Gyms</h3>
+                  <p className="text-zinc-500 text-sm">Discover nearby locations</p>
+                </div>
+              </div>
+              <div className="text-xs text-zinc-600 group-hover:text-zinc-400 transition-colors">
+                Use interactive map to find gyms and facilities near you
+              </div>
             </Link>
           </div>
         </div>
@@ -126,10 +214,10 @@ export default function UserDashboard() {
               color="text-green-500"
             />
             <StatCard 
-              icon={dashboardStats.currentSessionStatus === "ACTIVE" ? "🟢" : "⚫"} 
+              icon="🟢"
               label="Status" 
-              value={dashboardStats.currentSessionStatus === "ACTIVE" ? "In Session" : "Inactive"} 
-              color={dashboardStats.currentSessionStatus === "ACTIVE" ? "text-green-500" : "text-zinc-500"}
+              value="Per Plan"
+              color="text-green-500"
             />
           </div>
         )}
@@ -202,19 +290,20 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {memberships.length > 0 && (
+        {memberships.filter((m) => m.status === "ACTIVE").length > 0 && (
           <div className="mb-16">
             <div className="flex items-center gap-4 mb-8">
               <h2 className="text-2xl font-bold">Gym Memberships</h2>
               <div className="h-px flex-1 bg-zinc-800"></div>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {memberships.map((membership) => (
+              {memberships.filter((m) => m.status === "ACTIVE").map((membership) => (
                 <UserSessionCard
                   key={membership.id}
                   membership={membership}
                   dashboardStats={dashboardStats}
                   onSessionUpdate={(sessionData) => handleSessionUpdate(membership.gymId, sessionData)}
+                  onUnsubscribe={(m) => setSelectedMembership(m)}
                 />
               ))}
             </div>
@@ -240,12 +329,46 @@ export default function UserDashboard() {
           </div>
         )}
 
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-          <Link to={getDashboardRoute()} className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors inline-flex items-center gap-2 group">
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
-          </Link>
-        </div>
+        {memberships.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-2xl font-bold">Past Memberships</h2>
+              <div className="h-px flex-1 bg-zinc-800"></div>
+            </div>
+            {memberships.filter((m) => m.status !== "ACTIVE").length === 0 ? (
+              <div className="bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl p-10 text-center">
+                <p className="text-zinc-500 font-medium">No past memberships yet.</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {memberships.filter((m) => m.status !== "ACTIVE").map((membership) => (
+                  <UserSessionCard
+                    key={membership.id}
+                    membership={membership}
+                    dashboardStats={dashboardStats}
+                    onSessionUpdate={(sessionData) => handleSessionUpdate(membership.gymId, sessionData)}
+                    onUnsubscribe={() => {}}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
+
+      {selectedMembership && (
+        <UnsubscribeModal
+          membership={selectedMembership}
+          isOpen={!!selectedMembership}
+          onClose={() => setSelectedMembership(null)}
+          onSuccess={(message) => {
+            setSuccessMessage(message);
+            setTimeout(() => setSuccessMessage(""), 6000);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -40,7 +40,14 @@ export default function PurchasePlan() {
       localStorage.removeItem('selectedPlan');
       
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to join gym. Please try again.");
+      const errorMessage = err?.response?.data?.message || "Failed to join gym. Please try again.";
+      
+      // Handle duplicate membership error
+      if (errorMessage.includes("already have") || errorMessage.includes("duplicate") || errorMessage.includes("existing")) {
+        setError("You already have this plan. Check your dashboard to view your active memberships.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

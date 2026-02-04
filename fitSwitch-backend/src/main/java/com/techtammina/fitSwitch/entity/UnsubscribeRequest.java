@@ -36,6 +36,12 @@ public class UnsubscribeRequest {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal refundAmount;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal remainingAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal ownerShare = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private Integer usedMonths;
 
@@ -51,7 +57,8 @@ public class UnsubscribeRequest {
     public enum RequestStatus {
         PENDING,
         APPROVED,
-        REJECTED
+        REJECTED,
+        REFUNDED
     }
 
     // Constructors
@@ -84,6 +91,12 @@ public class UnsubscribeRequest {
 
     public BigDecimal getRefundAmount() { return refundAmount; }
     public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+
+    public BigDecimal getRemainingAmount() { return remainingAmount; }
+    public void setRemainingAmount(BigDecimal remainingAmount) { this.remainingAmount = remainingAmount; }
+
+    public BigDecimal getOwnerShare() { return ownerShare; }
+    public void setOwnerShare(BigDecimal ownerShare) { this.ownerShare = ownerShare; }
 
     public Integer getUsedMonths() { return usedMonths; }
     public void setUsedMonths(Integer usedMonths) { this.usedMonths = usedMonths; }
