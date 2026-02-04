@@ -35,7 +35,7 @@ public interface UserFacilitySubscriptionRepository extends JpaRepository<UserFa
     @Query("SELECT new com.techtammina.fitSwitch.dto.OwnerGymMemberResponse(" +
            "u.id, u.fullName, u.email, fp.planName, 'FACILITY', ufs.startDate, ufs.endDate, " +
            "CAST(ufs.status AS string), " +
-           "(SELECT MAX(gs.visitDate) FROM GymSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
+           "(SELECT MAX(gs.visitDate) FROM GymMembershipSession gs WHERE gs.userId = u.id AND gs.gymId = :gymId AND gs.status = 'COMPLETED')) " +
            "FROM UserFacilitySubscription ufs " +
            "JOIN User u ON ufs.userId = u.id " +
            "JOIN FacilityPlan fp ON ufs.facilityPlanId = fp.id " +

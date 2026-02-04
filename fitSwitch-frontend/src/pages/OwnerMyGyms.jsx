@@ -31,6 +31,12 @@ export default function OwnerMyGyms() {
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
           <div>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-4"
+            >
+              <span>←</span> Back to Dashboard
+            </Link>
             <h1 className="text-4xl font-bold tracking-tight">My Gyms</h1>
             <p className="text-zinc-400 mt-2 text-lg">
               Monitor and manage your fitness centers in the network.
@@ -138,11 +144,7 @@ export default function OwnerMyGyms() {
           ))}
         </div>
 
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-          <Link to="/dashboard" className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
-            ← Return to Dashboard
-          </Link>
-        </div>
+        <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
     </div>
   );

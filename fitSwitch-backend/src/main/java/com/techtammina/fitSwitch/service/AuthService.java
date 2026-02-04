@@ -172,4 +172,21 @@ public class AuthService {
             return ApiResponse.error("Failed to send OTP. Please try again.");
         }
     }
+
+    public ApiResponse<UserProfileResponse> getUserProfile(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found");
+        }
+
+        UserProfileResponse profile = new UserProfileResponse(
+            user.getId(),
+            user.getFullName(),
+            user.getEmail(),
+            user.getMobile(),
+            user.getRole().name()
+        );
+        
+        return ApiResponse.success("Profile retrieved successfully", profile);
+    }
 }

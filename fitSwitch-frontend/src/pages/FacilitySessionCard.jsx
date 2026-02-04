@@ -1,59 +1,63 @@
 import { useState, useEffect } from "react";
-import { checkInToGym, checkOutFromGym, getCurrentSession } from "../api/sessionApi";
-import { getAllGyms } from "../api/gymApi";
+import { checkInToFacility, checkOutFromFacility, getFacilitySession, getFacilityAccessToday } from "../api/sessionApi";
 
 export default function FacilitySessionCard({ subscription, onSessionUpdate, dashboardStats }) {
   const [loading, setLoading] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [error, setError] = useState("");
-  const [gymId, setGymId] = useState(null);
+  const [hasAccessedToday, setHasAccessedToday] = useState(false);
 
   useEffect(() => {
-    // Get gym ID for facility subscription
-    const fetchGymId = async () => {
+    // Set active session based on facility session API only
+    const checkActiveSession = async () => {
+      if (!subscription?.id) return;
+      
       try {
-        const response = await getAllGyms();
-        const gyms = response.data || [];
-        const gym = gyms.find(g => g.name === subscription.gymName || g.gymName === subscription.gymName);
+        // Always check facility session API for accurate state
+        const response = await getFacilitySession(subscription.id);
+        const sessionData = response.data;
+        console.log('Facility session data:', sessionData, 'for subscriptionId:', subscription.id);
         
-        if (gym) {
-          setGymId(gym.id);
+        // Check if there's an active session for this specific facility subscription
+        if (sessionData && sessionData.facilitySubscriptionId === subscription.id && sessionData.status === 'ACTIVE') {
+          setActiveSession({ status: "ACTIVE", checkInTime: sessionData.checkInTime || new Date() });
+          setHasAccessedToday(true);
         } else {
-          setGymId(1); // Fallback
+          setActiveSession(null);
         }
       } catch (err) {
-        setGymId(1); // Fallback
+        console.log('getCurrentSession failed:', err);
+        setActiveSession(null);
+      }
+
+      // Always check if already accessed today (even if session is not active)
+      try {
+        const accessedRes = await getFacilityAccessToday(subscription.id);
+        if (accessedRes.data === true) {
+          setHasAccessedToday(true);
+        }
+      } catch (err) {
+        console.log('getFacilityAccessToday failed:', err);
       }
     };
     
-    if (subscription.gymId || subscription.gym_id) {
-      setGymId(subscription.gymId || subscription.gym_id);
-    } else {
-      fetchGymId();
+    if (subscription?.id) {
+      checkActiveSession();
     }
-  }, [subscription]);
-
-  useEffect(() => {
-    // Set active session based on dashboard stats
-    if (dashboardStats?.currentSessionStatus === "ACTIVE") {
-      setActiveSession({ status: "ACTIVE", checkInTime: new Date() });
-    } else {
-      setActiveSession(null);
-    }
-  }, [dashboardStats]);
+  }, [dashboardStats, subscription.id]);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setError("");
       
-      if (!gymId) {
-        setError("Unable to determine gym ID. Please try again.");
-        return;
-      }
-      
-      const response = await checkInToGym(gymId);
-      setActiveSession(response.data);
+      const response = await checkInToFacility(subscription.id);
+      // Set active session immediately for UI responsiveness
+      setActiveSession({ 
+        status: "ACTIVE", 
+        checkInTime: new Date().toISOString()
+      });
+      setHasAccessedToday(true);
       
       if (onSessionUpdate) {
         onSessionUpdate(response.data);
@@ -61,6 +65,20 @@ export default function FacilitySessionCard({ subscription, onSessionUpdate, das
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Check-in failed";
       setError(errorMessage);
+      
+      // If error says session already exists, keep active UI; if already accessed today, disable access
+      if (errorMessage.includes("already have an active session")) {
+        setActiveSession({ 
+          status: "ACTIVE", 
+          checkInTime: new Date().toISOString()
+        });
+        setHasAccessedToday(true);
+        setError(""); // Clear error since we're handling it
+      } else if (errorMessage.includes("Already accessed")) {
+        setHasAccessedToday(true);
+        setActiveSession(null);
+        setError(""); // Show as already accessed today (button disabled)
+      }
     } finally {
       setLoading(false);
     }
@@ -71,7 +89,7 @@ export default function FacilitySessionCard({ subscription, onSessionUpdate, das
       setLoading(true);
       setError("");
       
-      const response = await checkOutFromGym();
+      const response = await checkOutFromFacility(subscription.id);
       setActiveSession(null);
       
       if (onSessionUpdate) {
@@ -149,9 +167,9 @@ export default function FacilitySessionCard({ subscription, onSessionUpdate, das
         {!activeSession ? (
           <button
             onClick={handleCheckIn}
-            disabled={loading || subscription.status !== "ACTIVE"}
+            disabled={loading || subscription.status !== "ACTIVE" || hasAccessedToday}
             className={`w-full py-3.5 rounded-2xl font-bold transition-all active:scale-[0.98] ${
-              loading || subscription.status !== "ACTIVE"
+              loading || subscription.status !== "ACTIVE" || hasAccessedToday
                 ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
                 : "bg-purple-500 text-white hover:bg-purple-400 shadow-lg shadow-purple-500/10"
             }`}
@@ -164,7 +182,7 @@ export default function FacilitySessionCard({ subscription, onSessionUpdate, das
                 </svg>
                 Processing...
               </span>
-            ) : "Access Facility"}
+            ) : hasAccessedToday ? "Already Accessed Today" : "Access Facility"}
           </button>
         ) : (
           <button

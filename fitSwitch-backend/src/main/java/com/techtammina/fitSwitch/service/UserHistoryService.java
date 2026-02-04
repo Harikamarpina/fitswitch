@@ -3,11 +3,13 @@ package com.techtammina.fitSwitch.service;
 import com.techtammina.fitSwitch.dto.UserMembershipHistoryResponse;
 import com.techtammina.fitSwitch.dto.UserFacilityHistoryResponse;
 import com.techtammina.fitSwitch.dto.UserSessionHistoryResponse;
+import com.techtammina.fitSwitch.dto.FacilitySessionHistoryResponse;
 import com.techtammina.fitSwitch.entity.MembershipStatus;
 import com.techtammina.fitSwitch.entity.FacilitySubscriptionStatus;
 import com.techtammina.fitSwitch.repository.MembershipRepository;
 import com.techtammina.fitSwitch.repository.UserFacilitySubscriptionRepository;
-import com.techtammina.fitSwitch.repository.GymSessionRepository;
+import com.techtammina.fitSwitch.repository.GymMembershipSessionRepository;
+import com.techtammina.fitSwitch.repository.FacilitySessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,10 @@ public class UserHistoryService {
     private UserFacilitySubscriptionRepository facilitySubscriptionRepository;
 
     @Autowired
-    private GymSessionRepository gymSessionRepository;
+    private GymMembershipSessionRepository gymSessionRepository;
+
+    @Autowired
+    private FacilitySessionRepository facilitySessionRepository;
 
     public List<UserMembershipHistoryResponse> getMembershipHistory(Long userId) {
         // Update expired memberships before fetching
@@ -42,6 +47,10 @@ public class UserHistoryService {
 
     public List<UserSessionHistoryResponse> getSessionHistory(Long userId) {
         return gymSessionRepository.findSessionHistoryByUserId(userId);
+    }
+
+    public List<FacilitySessionHistoryResponse> getFacilitySessionHistory(Long userId) {
+        return facilitySessionRepository.findFacilitySessionHistoryByUserId(userId);
     }
 
     private void updateExpiredMemberships(Long userId) {

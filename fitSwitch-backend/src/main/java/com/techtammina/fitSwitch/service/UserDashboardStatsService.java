@@ -14,7 +14,7 @@ import java.util.Optional;
 @Service
 public class UserDashboardStatsService {
 
-    private final GymSessionRepository gymSessionRepository;
+    private final GymMembershipSessionRepository gymSessionRepository;
     private final MembershipRepository membershipRepository;
     private final UserFacilitySubscriptionRepository facilitySubscriptionRepository;
     private final GymRepository gymRepository;
@@ -23,7 +23,7 @@ public class UserDashboardStatsService {
     private final GymPlanRepository gymPlanRepository;
     private final UserWalletRepository walletRepository;
 
-    public UserDashboardStatsService(GymSessionRepository gymSessionRepository,
+    public UserDashboardStatsService(GymMembershipSessionRepository gymSessionRepository,
                                    MembershipRepository membershipRepository,
                                    UserFacilitySubscriptionRepository facilitySubscriptionRepository,
                                    GymRepository gymRepository,
@@ -102,9 +102,8 @@ public class UserDashboardStatsService {
         }
         response.setSubscriptionExpiryDates(expiryDates);
 
-        // Current session status
-        Optional<GymSession> activeSession = gymSessionRepository.findByUserIdAndStatus(userId, GymSession.SessionStatus.ACTIVE);
-        response.setCurrentSessionStatus(activeSession.isPresent() ? "ACTIVE" : "NONE");
+        // Current session status is now scoped per membership/facility via separate session APIs
+        response.setCurrentSessionStatus("NONE");
 
         return response;
     }

@@ -37,14 +37,14 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="pt-4 flex items-center gap-3 text-sm text-zinc-500">
+            {/* <div className="pt-4 flex items-center gap-3 text-sm text-zinc-500">
               <span className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-black bg-zinc-800" />
                 ))}
               </span>
               <p>Trusted by 10,000+ fitness enthusiasts</p>
-            </div>
+            </div> */}
           </div>
 
           <div className="grid sm:grid-cols-1 gap-4">

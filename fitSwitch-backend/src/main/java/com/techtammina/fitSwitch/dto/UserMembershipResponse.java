@@ -1,6 +1,7 @@
 package com.techtammina.fitSwitch.dto;
 
 import com.techtammina.fitSwitch.entity.MembershipStatus;
+import com.techtammina.fitSwitch.enums.PassType;
 import java.time.LocalDate;
 
 public class UserMembershipResponse {
@@ -13,6 +14,7 @@ public class UserMembershipResponse {
     private MembershipStatus status;
     private Double price;
     private Integer durationDays;
+    private PassType passType;
 
     // Constructors
     public UserMembershipResponse() {}
@@ -80,5 +82,13 @@ public class UserMembershipResponse {
 
     public void setDurationDays(Integer durationDays) {
         this.durationDays = durationDays;
+    }
+
+    public PassType getPassType() {
+        return passType;
+    }
+
+    public void setPassType(PassType passType) {
+        this.passType = passType;
     }
 }

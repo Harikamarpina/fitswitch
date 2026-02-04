@@ -43,7 +43,8 @@ public class OwnerEarning {
     public enum EarningType {
         MEMBERSHIP_PURCHASE,    // Full membership payment
         FACILITY_USAGE,         // Pay-per-use facility access
-        MEMBERSHIP_SWITCH_USED  // Partial payment from membership switch
+        MEMBERSHIP_SWITCH_USED, // Partial payment from membership switch
+        MEMBERSHIP_REFUND       // Refund debit from owner earnings
     }
 
     // Constructors

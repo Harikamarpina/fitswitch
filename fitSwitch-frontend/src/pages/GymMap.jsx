@@ -16,6 +16,7 @@ L.Icon.Default.mergeOptions({
 
 export default function GymMap() {
   const [gyms, setGyms] = useState([]);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -31,10 +32,10 @@ export default function GymMap() {
       // Handle different response structures
       const gymsArray = Array.isArray(response) ? response : (response.data || []);
       
-      const gymsWithCoords = gymsArray.map((gym, index) => ({
+      const gymsWithCoords = gymsArray.map((gym) => ({
         ...gym,
-        latitude: 28.6139 + (index * 0.01),
-        longitude: 77.2090 + (index * 0.01),
+        latitude: gym.latitude != null ? Number(gym.latitude) : null,
+        longitude: gym.longitude != null ? Number(gym.longitude) : null,
       }));
       setGyms(gymsWithCoords);
     } catch (err) {
@@ -56,13 +57,44 @@ export default function GymMap() {
     );
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredGyms = normalizedQuery.length === 0
+    ? gyms
+    : gyms.filter((gym) => {
+        const haystack = [
+          gym.gymName,
+          gym.address,
+          gym.city,
+          gym.state,
+          gym.pincode
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      });
+
+  const firstMatch = filteredGyms.find((g) => g.latitude && g.longitude);
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold">Find Gyms Near You</h1>
-        <Link to={getDashboardRoute()} className="text-lime-400 hover:text-lime-300">
-          ← Back to Dashboard
-        </Link>
+        <div>
+          <Link to={getDashboardRoute()} className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 mb-3">
+            <span>←</span> Back to Dashboard
+          </Link>
+          <h1 className="text-4xl font-bold">Find Gyms Near You</h1>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by gym name, city, state, address, or pincode"
+          className="w-full px-5 py-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400/50 transition-colors"
+        />
       </div>
 
       {error && (
@@ -74,24 +106,52 @@ export default function GymMap() {
       <div className="grid lg:grid-cols-4 gap-6">
         {/* Gym List */}
         <div className="lg:col-span-1">
-          <h3 className="text-lg font-bold mb-4">Available Gyms ({gyms.length})</h3>
+          <h3 className="text-lg font-bold mb-4">Available Gyms ({filteredGyms.length})</h3>
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
-            {gyms.map((gym) => (
+            {filteredGyms.map((gym) => (
               <div key={gym.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                 <h4 className="font-bold text-white mb-2">{gym.gymName}</h4>
                 <p className="text-zinc-400 text-sm mb-2">{gym.address}</p>
-                <span className="text-xs bg-zinc-800 px-2 py-1 rounded">{gym.city}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-zinc-800 px-2 py-1 rounded">{gym.city}</span>
+                  {(!gym.latitude || !gym.longitude) && (
+                    <span className="text-xs text-amber-400">Location unavailable</span>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    to={`/gyms/${gym.id}`}
+                    className="text-xs font-bold uppercase tracking-widest text-lime-400 hover:text-lime-300"
+                  >
+                    View Details
+                  </Link>
+                  {gym.latitude && gym.longitude && (
+                    <button
+                      type="button"
+                      onClick={() => window.open(`https://www.google.com/maps?q=${gym.latitude},${gym.longitude}`, "_blank", "noopener,noreferrer")}
+                      className="text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300"
+                    >
+                      Navigate
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
+            {filteredGyms.length === 0 && (
+              <div className="text-zinc-500 text-sm">No gyms match your search.</div>
+            )}
           </div>
         </div>
 
         {/* Map */}
         <div className="lg:col-span-3">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden" style={{ height: '500px' }}>
-            {gyms.length > 0 ? (
+            {filteredGyms.length > 0 ? (
               <MapContainer
-                center={[28.6139, 77.2090]}
+                center={[
+                  firstMatch?.latitude || 28.6139,
+                  firstMatch?.longitude || 77.2090
+                ]}
                 zoom={11}
                 style={{ height: '100%', width: '100%' }}
               >
@@ -99,7 +159,9 @@ export default function GymMap() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='© OpenStreetMap contributors'
                 />
-                {gyms.map((gym) => (
+                {filteredGyms
+                  .filter((gym) => gym.latitude && gym.longitude && !Number.isNaN(gym.latitude) && !Number.isNaN(gym.longitude))
+                  .map((gym) => (
                   <Marker key={gym.id} position={[gym.latitude, gym.longitude]}>
                     <Popup>
                       <div>
@@ -108,6 +170,15 @@ export default function GymMap() {
                         <Link to={`/gyms/${gym.id}`} className="text-blue-500 hover:underline">
                           View Details
                         </Link>
+                        {gym.latitude && gym.longitude && (
+                          <button
+                            type="button"
+                            onClick={() => window.open(`https://www.google.com/maps?q=${gym.latitude},${gym.longitude}`, "_blank", "noopener,noreferrer")}
+                            className="ml-3 text-blue-500 hover:underline"
+                          >
+                            Navigate
+                          </button>
+                        )}
                       </div>
                     </Popup>
                   </Marker>

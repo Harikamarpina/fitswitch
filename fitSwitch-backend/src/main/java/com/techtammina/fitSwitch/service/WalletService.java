@@ -127,6 +127,24 @@ public class WalletService {
         earning.setCreatedAt(LocalDateTime.now());
         ownerEarningRepository.save(earning);
 
+        // Credit owner wallet with facility usage earning
+        UserWallet ownerWallet = walletRepository.findByUserId(gym.getOwnerId())
+                .orElseGet(() -> createWallet(gym.getOwnerId()));
+        ownerWallet.setBalance(ownerWallet.getBalance().add(usageCost));
+        UserWallet savedOwnerWallet = walletRepository.save(ownerWallet);
+
+        WalletTransaction ownerWalletTxn = new WalletTransaction();
+        ownerWalletTxn.setUserId(gym.getOwnerId());
+        ownerWalletTxn.setWalletId(savedOwnerWallet.getId());
+        ownerWalletTxn.setType(WalletTransaction.TransactionType.OWNER_EARNING);
+        ownerWalletTxn.setAmount(usageCost);
+        ownerWalletTxn.setBalanceAfter(savedOwnerWallet.getBalance());
+        ownerWalletTxn.setDescription("Owner earning: facility usage");
+        ownerWalletTxn.setGymId(request.getGymId());
+        ownerWalletTxn.setFacilityId(request.getFacilityId());
+        ownerWalletTxn.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerWalletTxn);
+
         return new ApiResponse(true, "Facility access granted successfully");
     }
 

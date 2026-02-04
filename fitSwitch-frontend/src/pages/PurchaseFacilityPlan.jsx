@@ -31,9 +31,24 @@ export default function PurchaseFacilityPlan() {
     setSuccess("");
 
     try {
+      // Subscribe to facility plan
       await axiosInstance.post('/user/facility/subscribe', {
         facilityPlanId: planData.facilityPlanId
       });
+      
+      // Record the transaction for earnings tracking
+      try {
+        await axiosInstance.post('/api/owner/earnings/record', {
+          type: 'FACILITY_PURCHASE',
+          amount: planData.price,
+          description: `Facility Plan: ${planData.planName} - ${planData.facilityName}`,
+          gymId: planData.gymId,
+          facilityId: planData.facilityId,
+          planId: planData.facilityPlanId
+        });
+      } catch (earningsErr) {
+        console.warn('Failed to record earnings, but subscription successful:', earningsErr);
+      }
       
       setSuccess("Successfully subscribed to facility plan! Enjoy your sessions.");
       localStorage.removeItem('selectedFacilityPlan');
@@ -44,7 +59,14 @@ export default function PurchaseFacilityPlan() {
       }, 2000);
       
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to subscribe to facility plan. Please try again.");
+      const errorMessage = err?.response?.data?.message || "Failed to subscribe to facility plan. Please try again.";
+      
+      // Handle duplicate subscription error
+      if (errorMessage.includes("already have") || errorMessage.includes("duplicate") || errorMessage.includes("existing")) {
+        setError("You already have this facility plan. Check your dashboard to view your active subscriptions.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

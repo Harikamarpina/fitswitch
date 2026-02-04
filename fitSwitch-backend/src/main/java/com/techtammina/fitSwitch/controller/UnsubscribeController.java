@@ -23,6 +23,15 @@ public class UnsubscribeController {
         this.jwtUtils = jwtUtils;
     }
 
+    @GetMapping("/user/membership/{membershipId}/refund-calculation")
+    public ResponseEntity<RefundCalculationResponse> getRefundCalculation(
+            @PathVariable Long membershipId,
+            HttpServletRequest request) {
+        Long userId = jwtUtils.getUserIdFromRequest(request);
+        RefundCalculationResponse calculation = unsubscribeService.getRefundCalculation(userId, membershipId);
+        return ResponseEntity.ok(calculation);
+    }
+
     @PostMapping("/user/subscription/unsubscribe")
     public ResponseEntity<ApiResponse> createUnsubscribeRequest(
             @Valid @RequestBody UnsubscribeRequestDto request,
@@ -65,6 +74,23 @@ public class UnsubscribeController {
             HttpServletRequest request) {
         Long ownerId = jwtUtils.getUserIdFromRequest(request);
         ApiResponse response = unsubscribeService.rejectUnsubscribeRequest(ownerId, id, rejection);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/owner/refund-requests")
+    public ResponseEntity<List<UnsubscribeRequestResponse>> getApprovedRefundRequests(
+            HttpServletRequest request) {
+        Long ownerId = jwtUtils.getUserIdFromRequest(request);
+        List<UnsubscribeRequestResponse> requests = unsubscribeService.getApprovedRefundRequests(ownerId);
+        return ResponseEntity.ok(requests);
+    }
+
+    @PostMapping("/owner/refund-requests/{id}/process")
+    public ResponseEntity<ApiResponse> processRefund(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        Long ownerId = jwtUtils.getUserIdFromRequest(request);
+        ApiResponse response = unsubscribeService.processRefund(ownerId, id);
         return ResponseEntity.ok(response);
     }
 }

@@ -53,7 +53,10 @@ export default function Wallet() {
     }
   };
 
-  const getTransactionTypeColor = (type) => {
+  const getTransactionTypeColor = (type, amount) => {
+    if (type === 'MEMBERSHIP_REFUND') {
+      return amount >= 0 ? 'text-lime-400' : 'text-red-400';
+    }
     switch (type) {
       case 'ADD_MONEY':
         return 'text-green-400';
@@ -61,8 +64,6 @@ export default function Wallet() {
         return 'text-red-400';
       case 'SUB':
         return 'text-red-400';
-      case 'MEMBERSHIP_REFUND':
-        return 'text-blue-400';
       case 'MEMBERSHIP_SWITCH':
         return 'text-orange-400';
       default:
@@ -106,17 +107,17 @@ export default function Wallet() {
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
+            <Link
+              to={getDashboardRoute()}
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-4"
+            >
+              <span>←</span> Back to Dashboard
+            </Link>
             <h1 className="text-4xl font-bold tracking-tight">My Wallet</h1>
             <p className="text-zinc-400 mt-2 text-lg">
               Securely manage your funds and track your fitness spend.
             </p>
           </div>
-          <Link
-            to={getDashboardRoute()}
-            className="text-sm font-medium text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
-          >
-            ← Back to Dashboard
-          </Link>
         </div>
 
         {error && (
@@ -132,17 +133,35 @@ export default function Wallet() {
             <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">Available Funds</h2>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-zinc-400">₹</span>
-              <span className="text-6xl font-black text-lime-500 tracking-tighter">
+              <span className={`text-6xl font-black tracking-tighter ${
+                wallet?.balance < 0 ? 'text-red-400' : 'text-lime-500'
+              }`}>
                 {wallet?.balance?.toFixed(0) || '0'}
-                <span className="text-2xl text-lime-500/50">.{wallet?.balance?.toFixed(2).split('.')[1] || '00'}</span>
+                <span className={`text-2xl ${
+                  wallet?.balance < 0 ? 'text-red-400/50' : 'text-lime-500/50'
+                }`}>.{wallet?.balance?.toFixed(2).split('.')[1] || '00'}</span>
               </span>
             </div>
+            {wallet?.balance < 0 && (
+              <div className="mt-4 p-4 bg-red-400/10 border border-red-400/20 rounded-2xl">
+                <div className="flex items-center gap-2 text-red-400 text-sm font-medium">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Negative balance due to pending refunds. Please add funds to complete transactions.</span>
+                </div>
+              </div>
+            )}
             <div className="mt-10">
               <button
                 onClick={() => setShowAddMoney(true)}
-                className="px-8 py-4 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98] shadow-xl shadow-lime-500/10"
+                className={`px-8 py-4 rounded-2xl font-bold transition-all active:scale-[0.98] shadow-xl ${
+                  wallet?.balance < 0 
+                    ? 'bg-red-500 text-white hover:bg-red-400 shadow-red-500/10'
+                    : 'bg-lime-500 text-black hover:bg-lime-400 shadow-lime-500/10'
+                }`}
               >
-                Top Up Wallet
+                {wallet?.balance < 0 ? 'Add Funds Now' : 'Top Up Wallet'}
               </button>
             </div>
           </div>
@@ -235,7 +254,7 @@ export default function Wallet() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-lg font-black tracking-tight ${getTransactionTypeColor(transaction.type)}`}>
+                    <div className={`text-lg font-black tracking-tight ${getTransactionTypeColor(transaction.type, transaction.amount)}`}>
                       {transaction.amount >= 0 ? '+' : ''}₹{Math.abs(transaction.amount).toFixed(0)}
                     </div>
                     <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">
@@ -248,11 +267,7 @@ export default function Wallet() {
           )}
         </div>
 
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-          <Link to={getDashboardRoute()} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
-            ← Return to Dashboard
-          </Link>
-        </div>
+        <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
     </div>
   );

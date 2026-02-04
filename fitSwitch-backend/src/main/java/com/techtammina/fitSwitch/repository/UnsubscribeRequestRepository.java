@@ -17,4 +17,6 @@ public interface UnsubscribeRequestRepository extends JpaRepository<UnsubscribeR
     Optional<UnsubscribeRequest> findByMembershipIdAndStatus(Long membershipId, UnsubscribeRequest.RequestStatus status);
     
     List<UnsubscribeRequest> findByOwnerIdAndStatusOrderByRequestDateDesc(Long ownerId, UnsubscribeRequest.RequestStatus status);
+    
+    List<UnsubscribeRequest> findByOwnerIdAndStatusOrderByApprovalDateDesc(Long ownerId, UnsubscribeRequest.RequestStatus status);
 }

@@ -1,16 +1,45 @@
 import axiosInstance from "./axiosInstance";
 
-// Get current session status
-export const getCurrentSession = () => {
-  return axiosInstance.get("/user/session/current");
+// Membership session APIs
+export const getMembershipSession = (membershipId) => {
+  return axiosInstance.get("/user/membership-session/current", {
+    params: { membershipId }
+  });
 };
 
-// Check in to gym
-export const checkInToGym = (gymId) => {
-  return axiosInstance.post("/user/session/check-in", { gymId });
+export const checkInToMembership = (membershipId) => {
+  return axiosInstance.post("/user/membership-session/check-in", { membershipId });
 };
 
-// Check out from gym
-export const checkOutFromGym = () => {
-  return axiosInstance.post("/user/session/check-out");
+export const checkOutFromMembership = (membershipId) => {
+  return axiosInstance.post("/user/membership-session/check-out", { membershipId });
+};
+
+// Facility session APIs
+export const getFacilitySession = (facilitySubscriptionId) => {
+  return axiosInstance.get("/user/facility-session/current", {
+    params: { facilitySubscriptionId }
+  });
+};
+
+export const getFacilityAccessToday = (facilitySubscriptionId) => {
+  return axiosInstance.get("/user/facility-session/today", {
+    params: { facilitySubscriptionId }
+  });
+};
+
+export const getActiveMembershipSessions = () => {
+  return axiosInstance.get("/user/membership-session/active");
+};
+
+export const getActiveFacilitySessions = () => {
+  return axiosInstance.get("/user/facility-session/active");
+};
+
+export const checkInToFacility = (facilitySubscriptionId) => {
+  return axiosInstance.post("/user/facility-session/check-in", { facilitySubscriptionId });
+};
+
+export const checkOutFromFacility = (facilitySubscriptionId) => {
+  return axiosInstance.post("/user/facility-session/check-out", { facilitySubscriptionId });
 };

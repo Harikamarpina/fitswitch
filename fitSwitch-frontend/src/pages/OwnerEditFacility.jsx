@@ -167,14 +167,6 @@ export default function OwnerEditFacility() {
           </button>
         </form>
 
-        <div className="mt-12 pt-8 border-t border-zinc-900">
-          <Link
-            to={`/owner/gym/${form.gymId}/facilities`}
-            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
-          >
-            <span>←</span> Back to Facilities
-          </Link>
-        </div>
       </div>
     </div>
   );

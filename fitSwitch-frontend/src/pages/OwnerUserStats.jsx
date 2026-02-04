@@ -57,15 +57,17 @@ export default function OwnerUserStats() {
 
   if (error || !userStats) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl">
-          <p className="text-red-400 mb-6 font-medium">{error || "Member not found"}</p>
-          <Link 
-            to={`/owner/gyms/${gymId}/users`} 
-            className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-xl transition-colors font-bold"
+      <div className="min-h-screen bg-black text-white px-6 py-12">
+        <div className="max-w-3xl mx-auto">
+          <Link
+            to={`/owner/gyms/${gymId}/users`}
+            className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-white transition-colors mb-6"
           >
-            ← Back to Members
+            <span>←</span> Back to Members
           </Link>
+          <div className="text-center p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl">
+            <p className="text-red-400 mb-6 font-medium">{error || "Member not found"}</p>
+          </div>
         </div>
       </div>
     );
@@ -207,14 +209,6 @@ export default function OwnerUserStats() {
           </section>
         </div>
 
-        <div className="mt-20 pt-8 border-t border-zinc-900">
-          <Link
-            to={`/owner/gyms/${gymId}/users`}
-            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
-          >
-            <span>←</span> Back to Gym Members
-          </Link>
-        </div>
       </div>
     </div>
   );

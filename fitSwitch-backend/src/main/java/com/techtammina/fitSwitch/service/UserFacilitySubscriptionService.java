@@ -66,17 +66,18 @@ public class UserFacilitySubscriptionService {
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        // TODO: Fix database schema for wallet_transactions.type column length
         // Create wallet transaction
-        // WalletTransaction transaction = new WalletTransaction();
-        // transaction.setUserId(userId);
-        // transaction.setWalletId(wallet.getId());
-        // transaction.setType(WalletTransaction.TransactionType.SUB);
-        // transaction.setAmount(plan.getPrice().negate());
-        // transaction.setBalanceAfter(newBalance);
-        // transaction.setDescription("Subscription payment: " + plan.getPlanName());
-        // transaction.setCreatedAt(LocalDateTime.now());
-        // transactionRepository.save(transaction);
+        WalletTransaction transaction = new WalletTransaction();
+        transaction.setUserId(userId);
+        transaction.setWalletId(wallet.getId());
+        transaction.setType(WalletTransaction.TransactionType.SUB);
+        transaction.setAmount(plan.getPrice().negate());
+        transaction.setBalanceAfter(newBalance);
+        transaction.setDescription("Facility plan subscription: " + plan.getPlanName());
+        transaction.setFacilityId(plan.getFacilityId());
+        transaction.setGymId(plan.getGymId());
+        transaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(transaction);
 
         // Create subscription
         UserFacilitySubscription subscription = new UserFacilitySubscription();
@@ -90,6 +91,27 @@ public class UserFacilitySubscriptionService {
         subscription.setCreatedAt(LocalDateTime.now());
 
         UserFacilitySubscription saved = subscriptionRepository.save(subscription);
+
+        // Credit owner wallet with facility plan purchase
+        Gym gymForOwner = gymRepository.findById(plan.getGymId()).orElse(null);
+        if (gymForOwner != null) {
+            UserWallet ownerWallet = walletRepository.findByUserId(gymForOwner.getOwnerId())
+                    .orElseGet(() -> createWallet(gymForOwner.getOwnerId()));
+            ownerWallet.setBalance(ownerWallet.getBalance().add(plan.getPrice()));
+            UserWallet savedOwnerWallet = walletRepository.save(ownerWallet);
+
+            WalletTransaction ownerWalletTxn = new WalletTransaction();
+            ownerWalletTxn.setUserId(gymForOwner.getOwnerId());
+            ownerWalletTxn.setWalletId(savedOwnerWallet.getId());
+            ownerWalletTxn.setType(WalletTransaction.TransactionType.OWNER_EARNING);
+            ownerWalletTxn.setAmount(plan.getPrice());
+            ownerWalletTxn.setBalanceAfter(savedOwnerWallet.getBalance());
+            ownerWalletTxn.setDescription("Owner earning: facility plan purchase");
+            ownerWalletTxn.setGymId(plan.getGymId());
+            ownerWalletTxn.setFacilityId(plan.getFacilityId());
+            ownerWalletTxn.setCreatedAt(LocalDateTime.now());
+            transactionRepository.save(ownerWalletTxn);
+        }
 
         // Get related entities for response
         Gym gym = gymRepository.findById(plan.getGymId()).orElse(null);
@@ -134,5 +156,10 @@ public class UserFacilitySubscriptionService {
         response.setPrice(plan != null ? plan.getPrice() : null);
         response.setDurationDays(plan != null ? plan.getDurationDays() : null);
         return response;
+    }
+
+    private UserWallet createWallet(Long userId) {
+        UserWallet wallet = new UserWallet(userId, BigDecimal.ZERO);
+        return walletRepository.save(wallet);
     }
 }
