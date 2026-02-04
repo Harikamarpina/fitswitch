@@ -31,6 +31,7 @@ import Wallet from "./pages/Wallet";
 import DigitalCard from "./pages/DigitalCard";
 import MembershipSwitch from "./pages/MembershipSwitch";
 import OwnerEarnings from "./pages/OwnerEarnings";
+import GymMap from "./pages/GymMap";
 
 import UnsubscribeRequests from "./pages/UnsubscribeRequests";
 
@@ -54,6 +55,7 @@ export default function App() {
 
         {/* Public Gym Routes */}
         <Route path="/gyms" element={<PublicGyms />} />
+        <Route path="/gyms/map" element={<GymMap />} />
         <Route path="/gyms/:gymId" element={<GymDetails />} />
         <Route path="/purchase-plan" element={<PurchasePlan />} />
         <Route

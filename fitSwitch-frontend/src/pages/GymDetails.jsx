@@ -68,128 +68,167 @@ export default function GymDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-4xl mx-auto">
-        <Link to="/gyms" className="underline text-zinc-200 hover:text-white mb-6 inline-block">
-          ← Back to Gyms
+    <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      
+      <div className="max-w-5xl mx-auto relative z-10">
+        <Link to="/gyms" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors mb-10 inline-flex items-center gap-2 group">
+          <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Network
         </Link>
 
-        {/* Gym Info */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 mb-8">
-          <h1 className="text-3xl font-bold mb-4">{gym.gymName}</h1>
-          <div className="grid md:grid-cols-2 gap-6 text-zinc-300">
-            <div>
-              <p className="mb-2"><span className="text-white font-semibold">Address:</span> {gym.address}</p>
-              <p className="mb-2"><span className="text-white font-semibold">City:</span> {gym.city}, {gym.state}</p>
-              <p className="mb-2"><span className="text-white font-semibold">Pincode:</span> {gym.pincode}</p>
+        {/* Gym Header Section */}
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-10 mb-12 backdrop-blur-md">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="space-y-4">
+              <span className="inline-block px-3 py-1 rounded-full bg-lime-500/10 border border-lime-500/20 text-lime-500 text-[10px] font-bold tracking-widest uppercase">
+                Partner Gym
+              </span>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{gym.gymName}</h1>
+              <div className="space-y-1">
+                <p className="text-zinc-400 font-medium">{gym.address}</p>
+                <p className="text-zinc-500 text-sm">{gym.city}, {gym.state} - {gym.pincode}</p>
+              </div>
             </div>
-            <div>
-              <p className="mb-2"><span className="text-white font-semibold">Contact:</span> {gym.contactNumber}</p>
-              <p className="mb-2"><span className="text-white font-semibold">Hours:</span> {gym.openTime} - {gym.closeTime}</p>
+            
+            <div className="flex flex-col items-start md:items-end gap-3 pt-6 md:pt-0 border-t md:border-t-0 border-zinc-800">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📞</span>
+                <span className="font-bold text-zinc-300">{gym.contactNumber}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🕒</span>
+                <span className="font-bold text-zinc-300">{gym.openTime} - {gym.closeTime}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Facilities */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 mb-8">
-          <h2 className="text-2xl font-bold mb-4">Facilities</h2>
-          {facilities.length === 0 ? (
-            <p className="text-zinc-300">No facilities listed.</p>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {facilities.map((facility) => (
-                <div key={facility.id} className="p-4 rounded-xl bg-black/30 border border-white/10">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{facility.facilityName}</h3>
-                      {facility.description && (
-                        <p className="text-zinc-300 text-sm mt-1">{facility.description}</p>
-                      )}
-                    </div>
-                    {facility.hasPlans && (
-                      <Link
-                        to={`/gyms/${gymId}/facilities/${facility.id}/plans`}
-                        className="ml-4 px-3 py-1 text-xs rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-                      >
-                        View Plans
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Plans */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 mb-8">
-          <h2 className="text-2xl font-bold mb-4">Membership Plans</h2>
-          {plans.length === 0 ? (
-            <p className="text-zinc-300">No plans available.</p>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {plans.map((plan) => (
-                <div key={plan.id} className="p-6 rounded-xl bg-black/30 border border-white/10">
-                  <h3 className="text-xl font-semibold mb-2">{plan.planName}</h3>
-                  <p className="text-zinc-300 text-sm mb-4">{plan.description}</p>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lime-400 font-bold text-lg">₹{plan.price}</span>
-                    <span className="text-zinc-300">{plan.durationDays} days</span>
-                  </div>
-                  <button 
-                    onClick={() => handleSelectPlan(plan)}
-                    className="w-full px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-                  >
-                    Select Plan
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Facility Add-On Plans */}
-        {facilityPlans.length > 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
-            <h2 className="text-2xl font-bold mb-4">Facility Add-On Plans</h2>
-            <p className="text-zinc-300 text-sm mb-6">Optional facility-specific plans to enhance your gym experience</p>
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-12">
             
-            {/* Group plans by facility */}
-            {Object.entries(
-              facilityPlans.reduce((acc, plan) => {
-                if (!acc[plan.facilityName]) {
-                  acc[plan.facilityName] = [];
-                }
-                acc[plan.facilityName].push(plan);
-                return acc;
-              }, {})
-            ).map(([facilityName, plans]) => (
-              <div key={facilityName} className="mb-6 last:mb-0">
-                <h3 className="text-lg font-semibold text-lime-400 mb-3">{facilityName}</h3>
-                <div className="grid md:grid-cols-2 gap-4 ml-4">
+            {/* Membership Plans Section */}
+            <section>
+              <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-2xl font-bold">Membership Plans</h2>
+                <div className="h-px flex-1 bg-zinc-800"></div>
+              </div>
+              
+              {plans.length === 0 ? (
+                <div className="p-10 rounded-3xl bg-zinc-900/20 border border-zinc-800/50 border-dashed text-center">
+                  <p className="text-zinc-500 font-medium">No memberships available at this location.</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
                   {plans.map((plan) => (
-                    <div key={plan.id} className="p-4 rounded-xl bg-black/30 border border-white/10">
-                      <h4 className="font-semibold mb-2">{plan.planName}</h4>
-                      {plan.description && (
-                        <p className="text-zinc-300 text-sm mb-3">{plan.description}</p>
-                      )}
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-lime-400 font-bold">₹{plan.price}</span>
-                        <span className="text-zinc-300 text-sm">{plan.durationDays} days</span>
+                    <div key={plan.id} className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 hover:border-lime-500/30 transition-all flex flex-col">
+                      <h3 className="text-xl font-bold mb-3">{plan.planName}</h3>
+                      <p className="text-zinc-500 text-sm leading-relaxed mb-8 flex-1">{plan.description}</p>
+                      
+                      <div className="flex items-end justify-between mb-8">
+                        <div>
+                          <span className="text-xs font-bold text-zinc-600 uppercase tracking-tighter block mb-1">Total Access</span>
+                          <span className="text-2xl font-black text-lime-500">₹{plan.price}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-zinc-600 uppercase tracking-tighter block mb-1">Duration</span>
+                          <span className="text-sm font-bold text-zinc-300">{plan.durationDays} Days</span>
+                        </div>
                       </div>
-                      <Link
-                        to={`/gyms/${gymId}/facilities/${plan.facilityId}/plans`}
-                        className="block w-full px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition text-center"
+                      
+                      <button 
+                        onClick={() => handleSelectPlan(plan)}
+                        className="w-full py-4 rounded-2xl bg-zinc-100 text-black font-bold hover:bg-white transition-all active:scale-[0.98]"
                       >
-                        View Details
-                      </Link>
+                        Enroll Now
+                      </button>
                     </div>
                   ))}
                 </div>
+              )}
+            </section>
+
+            {/* Facilities Section */}
+            <section>
+              <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-2xl font-bold">Available Facilities</h2>
+                <div className="h-px flex-1 bg-zinc-800"></div>
               </div>
-            ))}
+              
+              {facilities.length === 0 ? (
+                <p className="text-zinc-500 italic">This gym hasn't listed specific facilities yet.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {facilities.map((facility) => (
+                    <div key={facility.id} className="p-6 rounded-2xl bg-zinc-900/20 border border-zinc-800/50 group hover:border-zinc-700 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white group-hover:text-lime-500 transition-colors">{facility.facilityName}</h3>
+                          {facility.description && (
+                            <p className="text-zinc-500 text-xs mt-2 leading-relaxed">{facility.description}</p>
+                          )}
+                        </div>
+                        {facility.hasPlans && (
+                          <Link
+                            to={`/gyms/${gymId}/facilities/${facility.id}/plans`}
+                            className="ml-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-zinc-800 text-zinc-400 hover:bg-lime-500 hover:text-black transition-all"
+                          >
+                            Add-ons
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
-        )}
+
+          {/* Sidebar Area - Facility Add-On Plans */}
+          {facilityPlans.length > 0 && (
+            <aside className="lg:col-span-4">
+              <div className="sticky top-10 space-y-6">
+                <div className="p-8 rounded-3xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-md">
+                  <h2 className="text-xl font-bold mb-2">Enhance Experience</h2>
+                  <p className="text-zinc-500 text-sm mb-8 leading-relaxed">Specific facility plans designed to target your fitness goals.</p>
+                  
+                  <div className="space-y-10">
+                    {Object.entries(
+                      facilityPlans.reduce((acc, plan) => {
+                        if (!acc[plan.facilityName]) {
+                          acc[plan.facilityName] = [];
+                        }
+                        acc[plan.facilityName].push(plan);
+                        return acc;
+                      }, {})
+                    ).map(([facilityName, plans]) => (
+                      <div key={facilityName} className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-500">{facilityName}</h3>
+                        <div className="space-y-3">
+                          {plans.map((plan) => (
+                            <div key={plan.id} className="p-4 rounded-2xl bg-black/40 border border-zinc-800 group hover:border-lime-500/20 transition-all">
+                              <h4 className="font-bold text-sm mb-1">{plan.planName}</h4>
+                              <div className="flex justify-between items-center mt-4">
+                                <span className="text-sm font-black text-white">₹{plan.price}</span>
+                                <Link
+                                  to={`/gyms/${gymId}/facilities/${plan.facilityId}/plans`}
+                                  className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-lime-500 transition-colors"
+                                >
+                                  Details →
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
       </div>
     </div>
   );

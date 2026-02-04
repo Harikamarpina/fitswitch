@@ -73,87 +73,135 @@ export default function PlanUsers() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white px-4 py-10">
-      <div className="max-w-6xl mx-auto bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-black text-white px-4 py-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-bold">Plan Users</h2>
-            <p className="text-zinc-300 text-sm mt-1">
-              {planInfo?.type === "FACILITY" ? "Facility Plan" : "Gym Plan"} subscribers and their activity
+            <div className="flex items-center gap-3 mb-4">
+              <Link
+                to="/dashboard"
+                className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <span className="text-lime-400 font-medium tracking-wider uppercase text-sm">Member Management</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Plan <span className="text-lime-400">Subscribers</span>
+            </h1>
+            <p className="text-zinc-400 mt-4 max-w-2xl text-lg">
+              Detailed breakdown of members currently subscribed to the 
+              <span className="text-white font-medium"> {planInfo?.type === "FACILITY" ? "Facility" : "Gym"} Plan</span>.
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-lime-400">{users.length}</div>
-            <div className="text-sm text-zinc-300">Total Users</div>
+
+          <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-[2rem] flex items-center gap-6">
+            <div className="h-12 w-12 bg-lime-400/10 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-3xl font-bold">{users.length}</div>
+              <div className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Active Members</div>
+            </div>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-lg">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl flex items-center gap-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             {error}
           </div>
         )}
 
         {users.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">👥</div>
-            <h3 className="text-xl font-semibold mb-2">No users found</h3>
-            <p className="text-zinc-400">No one has purchased this plan yet.</p>
+          <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] py-24 text-center">
+            <div className="w-20 h-20 bg-zinc-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold mb-2">No Subscribers Yet</h3>
+            <p className="text-zinc-500 max-w-sm mx-auto">This plan hasn't been purchased by any members yet. Check back later for updates.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 font-semibold">User</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold">Purchase Date</th>
-                  <th className="text-left py-3 px-4 font-semibold">Expiry Date</th>
-                  <th className="text-left py-3 px-4 font-semibold">Total Visits</th>
-                  <th className="text-left py-3 px-4 font-semibold">Last Visit</th>
-                  <th className="text-left py-3 px-4 font-semibold">Last Check-in</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.userId} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-4 px-4">
-                      <div>
-                        <div className="font-semibold">{user.userName}</div>
-                        <div className="text-sm text-zinc-400">{user.email}</div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        user.status === "ACTIVE" 
-                          ? "bg-green-500/20 text-green-400" 
-                          : "bg-red-500/20 text-red-400"
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-sm">{formatDate(user.purchaseDate)}</td>
-                    <td className="py-4 px-4 text-sm">{formatDate(user.expiryDate)}</td>
-                    <td className="py-4 px-4">
-                      <span className="font-semibold text-lime-400">{user.totalVisits}</span>
-                    </td>
-                    <td className="py-4 px-4 text-sm">{formatDate(user.lastVisitDate)}</td>
-                    <td className="py-4 px-4 text-sm">{formatDateTime(user.lastCheckIn)}</td>
+          <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-800/50">
+                    <th className="py-6 px-8 text-xs font-bold text-zinc-500 uppercase tracking-widest">Subscriber</th>
+                    <th className="py-6 px-8 text-xs font-bold text-zinc-500 uppercase tracking-widest">Status</th>
+                    <th className="py-6 px-8 text-xs font-bold text-zinc-500 uppercase tracking-widest text-center">Activity</th>
+                    <th className="py-6 px-8 text-xs font-bold text-zinc-500 uppercase tracking-widest">Subscription Dates</th>
+                    <th className="py-6 px-8 text-xs font-bold text-zinc-500 uppercase tracking-widest">Last Check-in</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {users.map((user) => (
+                    <tr key={user.userId} className="hover:bg-zinc-800/20 transition-colors group">
+                      <td className="py-6 px-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-lime-400 border border-zinc-700">
+                            {user.userName.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white group-hover:text-lime-400 transition-colors">{user.userName}</div>
+                            <div className="text-sm text-zinc-500">{user.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-6 px-8">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
+                          user.status === "ACTIVE" 
+                            ? "bg-lime-400/10 text-lime-400" 
+                            : "bg-red-400/10 text-red-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${user.status === "ACTIVE" ? "bg-lime-400" : "bg-red-400"}`}></span>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="py-6 px-8">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-white">{user.totalVisits}</div>
+                          <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Total Visits</div>
+                        </div>
+                      </td>
+                      <td className="py-6 px-8">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-zinc-500 w-12">Start:</span>
+                            <span className="text-zinc-300 font-medium">{formatDate(user.purchaseDate)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-zinc-500 w-12">Expiry:</span>
+                            <span className="text-zinc-300 font-medium">{formatDate(user.expiryDate)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-6 px-8">
+                        <div className="text-sm text-zinc-300 font-medium">
+                          {user.lastCheckIn ? formatDateTime(user.lastCheckIn) : (
+                            <span className="text-zinc-600 italic">Never checked in</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 uppercase font-bold mt-1">
+                          {user.lastVisitDate ? `Last visit: ${formatDate(user.lastVisitDate)}` : ""}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-
-        <div className="mt-8">
-          <Link
-            to="/dashboard"
-            className="text-lime-400 hover:underline text-sm"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
       </div>
     </div>
   );

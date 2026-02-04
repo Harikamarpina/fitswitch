@@ -43,6 +43,7 @@ public class WalletTransaction {
     public enum TransactionType {
         ADD_MONEY,           // User adds money to wallet
         FACILITY_USAGE,      // Pay-per-use facility access
+        SUB,                 // Subscription payment
         MEMBERSHIP_REFUND,   // Refund from membership switch
         MEMBERSHIP_SWITCH,   // Payment for new membership after switch
         OWNER_EARNING       // Owner receives payment

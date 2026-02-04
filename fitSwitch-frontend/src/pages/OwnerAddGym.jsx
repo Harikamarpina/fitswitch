@@ -47,49 +47,65 @@ export default function OwnerAddGym() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-3xl mx-auto">
-        <Link to="/owner/gyms" className="underline text-zinc-200 hover:text-white">
-          ← Back
-        </Link>
+    <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
 
-        <h1 className="text-2xl font-bold mt-4">Add Gym</h1>
-        <p className="text-zinc-300 mt-2">Create a new gym under your account.</p>
+      <div className="max-w-3xl mx-auto relative z-10">
+        <div className="mb-12">
+          <Link
+            to="/owner/gyms"
+            className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors flex items-center gap-2 mb-6 group"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to My Gyms
+          </Link>
+          <h1 className="text-4xl font-bold tracking-tight">Register Gym</h1>
+          <p className="text-zinc-400 mt-2 text-lg">
+            Add a new location to the FitSwitch partner network.
+          </p>
+        </div>
 
-        {err && <p className="mt-4 text-red-400">{err}</p>}
+        {err && (
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-medium">
+            {err}
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit}
-          className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4"
+          className="space-y-8 bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-10 backdrop-blur-sm shadow-2xl shadow-black/40"
         >
-          <Input label="Gym Name" name="gymName" value={form.gymName} onChange={handleChange} />
-          <Input label="Address" name="address" value={form.address} onChange={handleChange} />
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input label="City" name="city" value={form.city} onChange={handleChange} />
-            <Input label="State" name="state" value={form.state} onChange={handleChange} />
-          </div>
+          <div className="grid gap-6">
+            <Input label="Gym Name" name="gymName" value={form.gymName} onChange={handleChange} placeholder="e.g. Iron Paradise Elite" />
+            <Input label="Full Address" name="address" value={form.address} onChange={handleChange} placeholder="Street name, building..." />
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="City" name="city" value={form.city} onChange={handleChange} placeholder="e.g. Mumbai" />
+              <Input label="State" name="state" value={form.state} onChange={handleChange} placeholder="e.g. Maharashtra" />
+            </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input label="Pincode" name="pincode" value={form.pincode} onChange={handleChange} />
-            <Input label="Contact Number" name="contactNumber" value={form.contactNumber} onChange={handleChange} />
-          </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Pincode" name="pincode" value={form.pincode} onChange={handleChange} placeholder="6-digit code" />
+              <Input label="Contact Number" name="contactNumber" value={form.contactNumber} onChange={handleChange} placeholder="+91 ..." />
+            </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input label="Latitude" name="latitude" value={form.latitude} onChange={handleChange} />
-            <Input label="Longitude" name="longitude" value={form.longitude} onChange={handleChange} />
-          </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Latitude" name="latitude" value={form.latitude} onChange={handleChange} placeholder="Optional" />
+              <Input label="Longitude" name="longitude" value={form.longitude} onChange={handleChange} placeholder="Optional" />
+            </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input label="Open Time" name="openTime" value={form.openTime} onChange={handleChange} />
-            <Input label="Close Time" name="closeTime" value={form.closeTime} onChange={handleChange} />
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Opening Time" name="openTime" value={form.openTime} onChange={handleChange} placeholder="e.g. 06:00 AM" />
+              <Input label="Closing Time" name="closeTime" value={form.closeTime} onChange={handleChange} placeholder="e.g. 10:00 PM" />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-3 rounded-xl bg-lime-400 text-black font-bold hover:bg-lime-300 transition disabled:opacity-60"
+            className="w-full py-5 rounded-2xl bg-lime-500 text-black font-black text-lg hover:bg-lime-400 transition-all active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-lime-500/10"
           >
-            {loading ? "Creating..." : "Create Gym"}
+            {loading ? "Registering..." : "Complete Registration"}
           </button>
         </form>
       </div>
@@ -99,11 +115,11 @@ export default function OwnerAddGym() {
 
 function Input({ label, ...props }) {
   return (
-    <div>
-      <label className="text-sm text-zinc-300">{label}</label>
+    <div className="space-y-2">
+      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest ml-1">{label}</label>
       <input
         {...props}
-        className="mt-1 w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:outline-none focus:ring-2 focus:ring-lime-400"
+        className="w-full px-5 py-4 rounded-2xl bg-black border border-zinc-800 text-white placeholder:text-zinc-800 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all"
       />
     </div>
   );

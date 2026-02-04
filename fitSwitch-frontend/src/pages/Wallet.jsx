@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getWalletBalance, addMoney, getTransactionHistory } from "../api/walletApi";
+import { getDashboardRoute } from "../utils/navigation";
 
 export default function Wallet() {
   const [wallet, setWallet] = useState(null);
@@ -58,6 +59,8 @@ export default function Wallet() {
         return 'text-green-400';
       case 'FACILITY_USAGE':
         return 'text-red-400';
+      case 'SUB':
+        return 'text-red-400';
       case 'MEMBERSHIP_REFUND':
         return 'text-blue-400';
       case 'MEMBERSHIP_SWITCH':
@@ -73,6 +76,8 @@ export default function Wallet() {
         return '💰';
       case 'FACILITY_USAGE':
         return '🏋️';
+      case 'SUB':
+        return '📋';
       case 'MEMBERSHIP_REFUND':
         return '↩️';
       case 'MEMBERSHIP_SWITCH':
@@ -94,72 +99,89 @@ export default function Wallet() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-start justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-green-500/5 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-3xl font-bold">My Wallet</h1>
-            <p className="text-zinc-300 mt-2">
-              Manage your wallet balance and view transaction history
+            <h1 className="text-4xl font-bold tracking-tight">My Wallet</h1>
+            <p className="text-zinc-400 mt-2 text-lg">
+              Securely manage your funds and track your fitness spend.
             </p>
           </div>
           <Link
-            to="/dashboard"
-            className="px-4 py-2 rounded-xl bg-zinc-700 text-white font-semibold hover:bg-zinc-600 transition"
+            to={getDashboardRoute()}
+            className="text-sm font-medium text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
           >
-            Back to Dashboard
+            ← Back to Dashboard
           </Link>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-lg">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-medium">
             {error}
           </div>
         )}
 
         {/* Wallet Balance Card */}
-        <div className="bg-gradient-to-r from-lime-500/20 to-green-500/20 border border-lime-500/30 rounded-xl p-8 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg text-zinc-300 mb-2">Current Balance</h2>
-              <div className="text-4xl font-bold text-lime-400">
-                ₹{wallet?.balance?.toFixed(2) || '0.00'}
-              </div>
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-10 mb-12 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 text-7xl opacity-10 group-hover:scale-110 transition-transform duration-500">💳</div>
+          <div className="relative z-10">
+            <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">Available Funds</h2>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-zinc-400">₹</span>
+              <span className="text-6xl font-black text-lime-500 tracking-tighter">
+                {wallet?.balance?.toFixed(0) || '0'}
+                <span className="text-2xl text-lime-500/50">.{wallet?.balance?.toFixed(2).split('.')[1] || '00'}</span>
+              </span>
             </div>
-            <div className="text-6xl">💳</div>
-          </div>
-          <div className="mt-6">
-            <button
-              onClick={() => setShowAddMoney(true)}
-              className="px-6 py-3 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-            >
-              Add Money
-            </button>
+            <div className="mt-10">
+              <button
+                onClick={() => setShowAddMoney(true)}
+                className="px-8 py-4 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98] shadow-xl shadow-lime-500/10"
+              >
+                Top Up Wallet
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Add Money Modal */}
         {showAddMoney && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
-              <h3 className="text-xl font-bold mb-4">Add Money to Wallet</h3>
-              <form onSubmit={handleAddMoney}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">
-                    Amount (₹)
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+              <h3 className="text-2xl font-bold mb-2">Add Money</h3>
+              <p className="text-zinc-500 text-sm mb-8">Enter the amount you wish to add to your wallet.</p>
+              <form onSubmit={handleAddMoney} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 ml-1">
+                    Amount (INR)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    value={addMoneyAmount}
-                    onChange={(e) => setAddMoneyAmount(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-400 focus:outline-none focus:border-lime-400"
-                    placeholder="Enter amount"
-                    required
-                  />
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">₹</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      value={addMoneyAmount}
+                      onChange={(e) => setAddMoneyAmount(e.target.value)}
+                      className="w-full pl-10 pr-4 py-4 rounded-2xl bg-black border border-zinc-800 text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all placeholder:text-zinc-800"
+                      placeholder="0.00"
+                      required
+                      autoFocus
+                    />
+                  </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={addingMoney}
+                    className="w-full py-4 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {addingMoney ? "Processing..." : "Confirm Deposit"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -167,16 +189,9 @@ export default function Wallet() {
                       setAddMoneyAmount("");
                       setError("");
                     }}
-                    className="flex-1 px-4 py-3 rounded-xl bg-zinc-700 text-white font-semibold hover:bg-zinc-600 transition"
+                    className="w-full py-4 rounded-2xl bg-transparent text-zinc-500 font-bold hover:text-white transition-all"
                   >
                     Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={addingMoney}
-                    className="flex-1 px-4 py-3 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition disabled:opacity-50"
-                  >
-                    {addingMoney ? "Adding..." : "Add Money"}
                   </button>
                 </div>
               </form>
@@ -185,52 +200,46 @@ export default function Wallet() {
         )}
 
         {/* Transaction History */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-xl font-bold mb-6">Transaction History</h3>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 mb-2">
+            <h3 className="text-2xl font-bold">Activity</h3>
+            <div className="h-px flex-1 bg-zinc-800"></div>
+          </div>
           
           {transactions.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-4">📝</div>
-              <p className="text-zinc-400">No transactions yet</p>
+            <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
+              <div className="text-4xl mb-4 opacity-20">📜</div>
+              <p className="text-zinc-500 font-medium">No transactions found in your history.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {transactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg"
+                  className="flex items-center justify-between p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl hover:bg-zinc-900/60 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl">
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-xl bg-black border border-zinc-800 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                       {getTransactionIcon(transaction.type)}
                     </div>
                     <div>
-                      <div className="font-medium">
+                      <div className="font-bold text-zinc-200 group-hover:text-white transition-colors">
                         {transaction.description}
                       </div>
-                      <div className="text-sm text-zinc-400">
+                      <div className="text-xs font-bold text-zinc-600 uppercase tracking-tighter mt-1">
                         {new Date(transaction.createdAt).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
+                          day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
                         })}
+                        {transaction.gymName && ` • ${transaction.gymName}`}
                       </div>
-                      {transaction.gymName && (
-                        <div className="text-xs text-zinc-500">
-                          {transaction.gymName}
-                          {transaction.facilityName && ` - ${transaction.facilityName}`}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`font-bold ${getTransactionTypeColor(transaction.type)}`}>
-                      {transaction.amount >= 0 ? '+' : ''}₹{transaction.amount.toFixed(2)}
+                    <div className={`text-lg font-black tracking-tight ${getTransactionTypeColor(transaction.type)}`}>
+                      {transaction.amount >= 0 ? '+' : ''}₹{Math.abs(transaction.amount).toFixed(0)}
                     </div>
-                    <div className="text-sm text-zinc-400">
-                      Balance: ₹{transaction.balanceAfter.toFixed(2)}
+                    <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">
+                      Bal: ₹{transaction.balanceAfter.toFixed(0)}
                     </div>
                   </div>
                 </div>
@@ -239,9 +248,9 @@ export default function Wallet() {
           )}
         </div>
 
-        <div className="mt-8 text-center">
-          <Link to="/dashboard" className="underline text-zinc-200 hover:text-white">
-            ← Back to Dashboard
+        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
+          <Link to={getDashboardRoute()} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
+            ← Return to Dashboard
           </Link>
         </div>
       </div>

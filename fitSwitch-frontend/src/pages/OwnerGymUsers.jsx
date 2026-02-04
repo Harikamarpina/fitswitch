@@ -69,97 +69,124 @@ export default function OwnerGymUsers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400 mx-auto mb-4"></div>
-          <p className="text-zinc-300">Loading gym users...</p>
+          <div className="w-12 h-12 border-4 border-lime-500/30 border-t-lime-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-zinc-500 font-medium">Analyzing member data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white px-4 py-10">
-      <div className="max-w-6xl mx-auto bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-black text-white px-6 py-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-3xl font-bold">Gym Users</h2>
-            <p className="text-zinc-300 text-sm mt-1">Members and subscribers of your gym</p>
+            <h2 className="text-4xl font-extrabold tracking-tight">Gym Members</h2>
+            <p className="text-zinc-400 mt-2 text-lg">Detailed overview of your gym's community and active subscribers.</p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-lime-400">{users.length}</div>
-            <div className="text-sm text-zinc-300">Total Users</div>
+          <div className="bg-zinc-900/50 border border-zinc-800 px-8 py-4 rounded-3xl flex items-center gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-black text-lime-400 leading-none">{users.length}</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mt-2">Total Members</div>
+            </div>
+            <div className="w-px h-8 bg-zinc-800"></div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-white leading-none">
+                {users.filter(u => u.membershipStatus === "ACTIVE").length}
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mt-2">Active Now</div>
+            </div>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-lg">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             {error}
           </div>
         )}
 
-        {!loading && users.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">👥</div>
-            <h3 className="text-xl font-semibold mb-2">No users found</h3>
-            <p className="text-zinc-400">No members have joined this gym yet.</p>
+        {users.length === 0 ? (
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-20 text-center">
+            <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-3xl text-zinc-500">👥</span>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">No members found</h3>
+            <p className="text-zinc-400 max-w-sm mx-auto">Your community is just starting. Members will appear here once they join your gym.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {users.map((user) => (
               <Link
                 key={user.userId}
                 to={`/owner/gyms/${gymId}/users/${user.userId}/stats`}
-                className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition block"
+                className="group relative bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6 hover:bg-zinc-900/80 hover:border-zinc-700 transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{user.userName}</h3>
-                    <p className="text-zinc-400 text-sm">{user.email}</p>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-lime-500/10 rounded-2xl flex items-center justify-center text-lime-400 font-bold text-xl">
+                    {user.userName?.charAt(0)}
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-lime-400">{user.totalVisits}</div>
-                    <div className="text-xs text-zinc-400">visits</div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-white group-hover:text-lime-400 transition-colors truncate">
+                      {user.userName}
+                    </h3>
+                    <p className="text-zinc-500 text-xs truncate">{user.email}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Membership</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
+                    <div className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Visits</div>
+                    <div className="text-lg font-black text-white">{user.totalVisits}</div>
+                  </div>
+                  <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
+                    <div className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Last Visit</div>
+                    <div className="text-sm font-bold text-zinc-300 truncate">{formatDate(user.lastVisitDate)}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center bg-black/20 p-2 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500">Gym Sub</span>
+                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black tracking-tighter ${
                       user.membershipStatus === "ACTIVE" 
-                        ? "bg-green-500/20 text-green-400" 
-                        : "bg-zinc-500/20 text-zinc-400"
+                        ? "bg-lime-500/10 text-lime-400" 
+                        : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {user.membershipStatus}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Facility</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
+                  <div className="flex justify-between items-center bg-black/20 p-2 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500">Facility Sub</span>
+                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black tracking-tighter ${
                       user.facilitySubscriptionStatus === "ACTIVE" 
-                        ? "bg-purple-500/20 text-purple-400" 
-                        : "bg-zinc-500/20 text-zinc-400"
+                        ? "bg-blue-500/10 text-blue-400" 
+                        : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {user.facilitySubscriptionStatus}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                    <span className="text-zinc-400">Last Visit</span>
-                    <span className="text-zinc-300">{formatDate(user.lastVisitDate)}</span>
-                  </div>
+                </div>
+
+                <div className="mt-6 text-center">
+                  <span className="text-xs text-lime-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    View Member Profile →
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
         )}
 
-        <div className="mt-8">
+        <div className="mt-16 pt-8 border-t border-zinc-900">
           <Link
             to="/dashboard"
-            className="text-lime-400 hover:underline text-sm"
+            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
           >
-            ← Back to Dashboard
+            <span>←</span> Back to Dashboard
           </Link>
         </div>
       </div>

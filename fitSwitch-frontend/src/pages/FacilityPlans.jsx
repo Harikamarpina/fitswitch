@@ -77,90 +77,121 @@ export default function FacilityPlans() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-4xl mx-auto">
-        <Link to={`/gyms/${gymId}`} className="underline text-zinc-200 hover:text-white">
-          ← Back to Gym Details
-        </Link>
-
-        <div className="mt-6">
-          <h1 className="text-3xl font-bold">{facility?.facilityName} Plans</h1>
-          <p className="text-zinc-300 mt-2">
-            Available subscription plans for {facility?.facilityName} at {gym?.gymName}
+    <div className="min-h-screen bg-black text-white px-4 py-12">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <Link
+              to={`/gyms/${gymId}`}
+              className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <span className="text-lime-400 font-medium tracking-wider uppercase text-xs">Facility Access</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            {facility?.facilityName} <span className="text-lime-400">Plans</span>
+          </h1>
+          <p className="text-zinc-400 mt-4 text-lg max-w-2xl leading-relaxed">
+            Choose a plan that fits your schedule at 
+            <span className="text-white font-semibold"> {gym?.gymName}</span>.
           </p>
         </div>
 
         {error && (
-          <div className="mt-4 bg-red-500/10 border border-red-500/30 text-red-200 p-3 rounded-lg text-sm">
-            {error}
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl flex items-center gap-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
         {!loading && !error && plans.length === 0 && (
-          <div className="mt-8 text-center py-16">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-12 max-w-md mx-auto">
-              <div className="text-6xl mb-4">🏃‍♀️</div>
-              <h3 className="text-xl font-semibold mb-2">No plans available</h3>
-              <p className="text-zinc-400">
-                This facility doesn't have any subscription plans yet.
-              </p>
+          <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] py-24 text-center">
+            <div className="w-20 h-20 bg-zinc-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
+            <h3 className="text-2xl font-bold mb-2">No Plans Available</h3>
+            <p className="text-zinc-500 max-w-xs mx-auto text-sm leading-relaxed">This facility hasn't listed any subscription plans yet. Please check back soon.</p>
           </div>
         )}
 
         {plans.length > 0 && (
-          <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {plans.map((plan) => {
               const isActive = hasActiveSubscription(plan.facilityId);
               
               return (
                 <div
                   key={plan.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition"
+                  className="group relative flex flex-col bg-zinc-900/40 border border-zinc-800/50 rounded-[2rem] p-8 hover:bg-zinc-900/60 hover:border-zinc-700/50 transition-all duration-300"
                 >
-                  <div className="mb-4">
-                    <h3 className="text-xl font-semibold text-lime-400">
+                  <div className="mb-6">
+                    <div className="w-12 h-12 bg-lime-400/10 rounded-2xl flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white group-hover:text-lime-400 transition-colors">
                       {plan.planName}
                     </h3>
-                    {plan.description && (
-                      <p className="text-zinc-300 text-sm mt-2">{plan.description}</p>
-                    )}
                   </div>
 
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-400">Duration</span>
-                      <span className="font-medium">{plan.durationDays} days</span>
+                  <div className="space-y-4 mb-8 border-t border-zinc-800/50 pt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Duration</span>
+                      <span className="text-lg font-bold text-zinc-200">{plan.durationDays} <span className="text-zinc-500 font-medium">Days</span></span>
                     </div>
+                    <div className="flex justify-between items-end border-b border-zinc-800/50 pb-6">
+                      <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Price</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-lime-400">₹{plan.price}</span>
+                      </div>
+                    </div>
+                  </div>
 
-                    <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                      <span className="text-zinc-400">Price</span>
-                      <span className="font-bold text-lime-400 text-xl">₹{plan.price}</span>
-                    </div>
+                  <div className="mb-10 flex-grow">
+                    <p className="text-zinc-400 text-sm leading-relaxed italic line-clamp-3">
+                      "{plan.description || `Premium access to all ${facility?.facilityName} equipment and classes.`}"
+                    </p>
                   </div>
 
                   <button
                     onClick={() => handleSelectPlan(plan)}
                     disabled={isActive}
-                    className={`w-full px-4 py-3 rounded-xl font-semibold transition ${
+                    className={`h-14 w-full rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                       isActive
-                        ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-                        : "bg-lime-400 text-black hover:bg-lime-300"
+                        ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
+                        : "bg-lime-400 text-black hover:bg-lime-300 shadow-[0_0_20px_rgba(163,230,53,0.15)] group-hover:shadow-[0_0_30px_rgba(163,230,53,0.25)]"
                     }`}
                   >
-                    {isActive ? "Already Subscribed" : "Buy Facility Plan"}
+                    {isActive ? (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Already Subscribed
+                      </>
+                    ) : (
+                      <>
+                        Purchase Plan
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </>
+                    )}
                   </button>
                 </div>
               );
             })}
           </div>
         )}
-
-        <div className="mt-12 text-center">
-          <Link to="/gyms" className="underline text-zinc-200 hover:text-white">
-            ← Browse All Gyms
-          </Link>
-        </div>
       </div>
     </div>
   );

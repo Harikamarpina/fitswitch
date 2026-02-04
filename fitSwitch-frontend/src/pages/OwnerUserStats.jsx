@@ -46,10 +46,10 @@ export default function OwnerUserStats() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400 mx-auto mb-4"></div>
-          <p className="text-zinc-300">Loading user statistics...</p>
+          <div className="w-12 h-12 border-4 border-lime-500/30 border-t-lime-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-zinc-500 font-medium">Fetching member profile...</p>
         </div>
       </div>
     );
@@ -57,11 +57,14 @@ export default function OwnerUserStats() {
 
   if (error || !userStats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400">{error || "User not found"}</p>
-          <Link to={`/owner/gyms/${gymId}/users`} className="text-lime-400 hover:underline mt-4 inline-block">
-            ← Back to Users
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl">
+          <p className="text-red-400 mb-6 font-medium">{error || "Member not found"}</p>
+          <Link 
+            to={`/owner/gyms/${gymId}/users`} 
+            className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-3 rounded-xl transition-colors font-bold"
+          >
+            ← Back to Members
           </Link>
         </div>
       </div>
@@ -69,118 +72,147 @@ export default function OwnerUserStats() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white px-4 py-10">
-      <div className="max-w-4xl mx-auto bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
-        {/* User Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold">{userStats.userName}</h2>
-            <p className="text-zinc-300 mt-1">{userStats.email}</p>
+    <div className="min-h-screen bg-black text-white px-6 py-12">
+      <div className="max-w-5xl mx-auto">
+        <button 
+          onClick={() => window.history.back()} 
+          className="group flex items-center gap-2 text-zinc-500 hover:text-white transition-colors mb-8"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform">←</span>
+          <span className="text-sm font-medium">Back to Members</span>
+        </button>
+
+        {/* User Profile Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-lime-500/10 rounded-3xl flex items-center justify-center text-lime-400 font-black text-4xl border border-lime-500/20">
+              {userStats.userName?.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-5xl font-black tracking-tighter mb-2">{userStats.userName}</h2>
+              <p className="text-zinc-500 font-medium text-lg">{userStats.email}</p>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-lime-400">{userStats.totalVisitCount}</div>
-            <div className="text-sm text-zinc-300">Total Visits</div>
+          <div className="bg-zinc-900/50 border border-zinc-800 px-8 py-4 rounded-3xl text-center">
+            <div className="text-4xl font-black text-lime-400 leading-none">{userStats.totalVisitCount}</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mt-2">Life-time Visits</div>
           </div>
         </div>
 
-        {/* Visit Activity */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <span className="text-2xl mr-2">🔑</span>
-              Last Check-in
-            </h3>
-            <p className="text-zinc-300">{formatDateTime(userStats.lastCheckIn)}</p>
+        {/* Quick Activity Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 group hover:bg-zinc-900/60 transition-colors">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 text-xl">
+                🔑
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Recent Check-in</h3>
+            </div>
+            <p className="text-2xl font-bold text-white leading-tight">
+              {formatDateTime(userStats.lastCheckIn)}
+            </p>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <span className="text-2xl mr-2">🚪</span>
-              Last Check-out
-            </h3>
-            <p className="text-zinc-300">{formatDateTime(userStats.lastCheckOut)}</p>
+
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 group hover:bg-zinc-900/60 transition-colors">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 text-xl">
+                🚪
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Recent Check-out</h3>
+            </div>
+            <p className="text-2xl font-bold text-white leading-tight">
+              {formatDateTime(userStats.lastCheckOut)}
+            </p>
           </div>
         </div>
 
-        {/* Memberships */}
-        {userStats.memberships && userStats.memberships.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-2xl mr-2">🏋️</span>
-              Gym Memberships
-            </h3>
-            <div className="space-y-4">
-              {userStats.memberships.map((membership, index) => (
-                <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-lime-400">{membership.planName}</h4>
-                      <div className="text-sm text-zinc-300 mt-2 space-y-1">
-                        <div>Purchase Date: {formatDate(membership.purchaseDate)}</div>
-                        <div>Expiry Date: {formatDate(membership.expiryDate)}</div>
-                      </div>
-                    </div>
-                    <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                      membership.status === "ACTIVE" 
-                        ? "bg-green-500/20 text-green-400" 
-                        : "bg-red-500/20 text-red-400"
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Gym Memberships */}
+          <section>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="text-2xl">🏋️</span>
+              <h3 className="text-2xl font-black tracking-tight uppercase">Gym Memberships</h3>
+            </div>
+            {userStats.memberships && userStats.memberships.length > 0 ? (
+              <div className="space-y-4">
+                {userStats.memberships.map((membership, index) => (
+                  <div key={index} className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 relative overflow-hidden group">
+                    <div className={`absolute top-0 right-0 px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-bl-xl ${
+                      membership.status === "ACTIVE" ? "bg-lime-500 text-black" : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {membership.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Facility Subscriptions */}
-        {userStats.facilitySubscriptions && userStats.facilitySubscriptions.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-2xl mr-2">🏃</span>
-              Facility Subscriptions
-            </h3>
-            <div className="space-y-4">
-              {userStats.facilitySubscriptions.map((subscription, index) => (
-                <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-purple-400">{subscription.facilityName}</h4>
-                      <p className="text-sm text-zinc-400">{subscription.planName}</p>
-                      <div className="text-sm text-zinc-300 mt-2 space-y-1">
-                        <div>Purchase Date: {formatDate(subscription.purchaseDate)}</div>
-                        <div>Expiry Date: {formatDate(subscription.expiryDate)}</div>
+                    </div>
+                    <h4 className="text-xl font-bold text-white mb-4 group-hover:text-lime-400 transition-colors">
+                      {membership.planName}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Purchased</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(membership.purchaseDate)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Expires</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(membership.expiryDate)}</div>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                      subscription.status === "ACTIVE" 
-                        ? "bg-green-500/20 text-green-400" 
-                        : "bg-red-500/20 text-red-400"
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-zinc-900/20 border border-zinc-800 border-dashed rounded-3xl p-10 text-center">
+                <p className="text-zinc-500 font-medium">No gym memberships found</p>
+              </div>
+            )}
+          </section>
+
+          {/* Facility Subscriptions */}
+          <section>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="text-2xl">🏃</span>
+              <h3 className="text-2xl font-black tracking-tight uppercase">Facility Passes</h3>
+            </div>
+            {userStats.facilitySubscriptions && userStats.facilitySubscriptions.length > 0 ? (
+              <div className="space-y-4">
+                {userStats.facilitySubscriptions.map((subscription, index) => (
+                  <div key={index} className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 relative overflow-hidden group">
+                    <div className={`absolute top-0 right-0 px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-bl-xl ${
+                      subscription.status === "ACTIVE" ? "bg-blue-500 text-white" : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {subscription.status}
-                    </span>
+                    </div>
+                    <div className="mb-4">
+                      <h4 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                        {subscription.facilityName}
+                      </h4>
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">{subscription.planName}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Purchased</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(subscription.purchaseDate)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Expires</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(subscription.expiryDate)}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                ))}
+              </div>
+            ) : (
+              <div className="bg-zinc-900/20 border border-zinc-800 border-dashed rounded-3xl p-10 text-center">
+                <p className="text-zinc-500 font-medium">No facility passes found</p>
+              </div>
+            )}
+          </section>
+        </div>
 
-        {/* Empty State */}
-        {(!userStats.memberships || userStats.memberships.length === 0) && 
-         (!userStats.facilitySubscriptions || userStats.facilitySubscriptions.length === 0) && (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">📋</div>
-            <p className="text-zinc-400">No active subscriptions found for this user.</p>
-          </div>
-        )}
-
-        <div className="mt-8">
+        <div className="mt-20 pt-8 border-t border-zinc-900">
           <Link
             to={`/owner/gyms/${gymId}/users`}
-            className="text-lime-400 hover:underline text-sm"
+            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
           >
-            ← Back to Gym Users
+            <span>←</span> Back to Gym Members
           </Link>
         </div>
       </div>

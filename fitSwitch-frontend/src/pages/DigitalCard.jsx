@@ -1,74 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getWalletBalance, digitalCardCheckIn } from "../api/walletApi";
-import { getPublicGyms } from "../api/publicGymApi";
+import axiosInstance from "../api/axiosInstance";
+import { getDashboardRoute } from "../utils/navigation";
 
 export default function DigitalCard() {
-  const [wallet, setWallet] = useState(null);
-  const [gyms, setGyms] = useState([]);
-  const [selectedGym, setSelectedGym] = useState(null);
-  const [facilities, setFacilities] = useState([]);
+  const [cardData, setCardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    fetchCardData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCardData = async () => {
     try {
       setLoading(true);
-      const [walletRes, gymsRes] = await Promise.all([
-        getWalletBalance(),
-        getPublicGyms()
-      ]);
-      setWallet(walletRes);
-      setGyms(gymsRes);
+      const response = await axiosInstance.get('/api/digital-card/data');
+      setCardData(response.data);
     } catch (err) {
-      setError(err.message || "Failed to load data");
+      setError(err.response?.data?.message || "Failed to load digital card data");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGymSelect = async (gym) => {
-    setSelectedGym(gym);
-    try {
-      // Fetch facilities for selected gym
-      const response = await fetch(`/api/public/gyms/${gym.id}/facilities`);
-      const facilitiesData = await response.json();
-      setFacilities(facilitiesData);
-    } catch (err) {
-      setError("Failed to load gym facilities");
-    }
-  };
-
-  const handleFacilityAccess = async (facilityId) => {
-    if (!selectedGym || !facilityId) return;
-
-    // Check wallet balance
-    if (!wallet || wallet.balance < 50) {
-      setError("Insufficient wallet balance. Please add money to your wallet first.");
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      setError("");
-      setSuccess("");
-
-      await digitalCardCheckIn(selectedGym.id, facilityId);
-      setSuccess("Digital card access granted! You can now use the facility.");
-      
-      // Refresh wallet balance
-      const updatedWallet = await getWalletBalance();
-      setWallet(updatedWallet);
-    } catch (err) {
-      setError(err.message || "Failed to access facility");
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -84,132 +36,153 @@ export default function DigitalCard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-start justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-black text-white px-6 py-10 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-3xl font-bold">Digital Fitness Card</h1>
-            <p className="text-zinc-300 mt-2">
-              Access any facility at any gym with pay-per-use
+            <h1 className="text-4xl font-bold tracking-tight">Digital Fitness Card</h1>
+            <p className="text-zinc-400 mt-2 text-lg">
+              Your all-access pass to the FitSwitch network.
             </p>
           </div>
-          <div className="flex gap-3">
-            <Link
-              to="/wallet"
-              className="px-4 py-2 rounded-xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition"
-            >
-              My Wallet
-            </Link>
-            <Link
-              to="/dashboard"
-              className="px-4 py-2 rounded-xl bg-zinc-700 text-white font-semibold hover:bg-zinc-600 transition"
-            >
-              Dashboard
-            </Link>
-          </div>
-        </div>
-
-        {/* Wallet Balance */}
-        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg text-zinc-300 mb-2">Wallet Balance</h2>
-              <div className="text-2xl font-bold text-purple-400">
-                ₹{wallet?.balance?.toFixed(2) || '0.00'}
-              </div>
-            </div>
-            <div className="text-4xl">💳</div>
-          </div>
-          <div className="mt-4 text-sm text-zinc-400">
-            Facility usage cost: ₹50.00 per session
-          </div>
+          <Link
+            to={getDashboardRoute()}
+            className="text-sm font-medium text-zinc-500 hover:text-white transition-colors"
+          >
+            ← Back to Dashboard
+          </Link>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-lg">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-medium">
             {error}
           </div>
         )}
 
-        {success && (
-          <div className="mb-6 bg-green-500/10 border border-green-500/30 text-green-200 p-4 rounded-lg">
-            {success}
-          </div>
-        )}
-
-        {/* Gym Selection */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
-          <h3 className="text-xl font-bold mb-6">Select a Gym</h3>
-          
-          {gyms.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-4">🏋️</div>
-              <p className="text-zinc-400">No gyms available</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {gyms.map((gym) => (
-                <div
-                  key={gym.id}
-                  onClick={() => handleGymSelect(gym)}
-                  className={`p-4 border rounded-lg cursor-pointer transition ${
-                    selectedGym?.id === gym.id
-                      ? 'border-lime-400 bg-lime-400/10'
-                      : 'border-white/10 bg-white/5 hover:border-white/20'
-                  }`}
-                >
-                  <h4 className="font-semibold text-lg mb-2">{gym.gymName}</h4>
-                  <p className="text-zinc-400 text-sm mb-2">{gym.address}</p>
-                  <div className="text-xs text-zinc-500">
-                    {gym.city} • {gym.state}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Facility Selection */}
-        {selectedGym && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-            <h3 className="text-xl font-bold mb-6">
-              Select Facility at {selectedGym.gymName}
-            </h3>
-            
-            {facilities.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">🏃</div>
-                <p className="text-zinc-400">No facilities available at this gym</p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {facilities.map((facility) => (
-                  <div
-                    key={facility.id}
-                    className="p-4 border border-white/10 bg-white/5 rounded-lg"
-                  >
-                    <h4 className="font-semibold text-lg mb-2">{facility.facilityName}</h4>
-                    <p className="text-zinc-400 text-sm mb-4">{facility.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-lime-400 font-bold">₹50.00</div>
-                      <button
-                        onClick={() => handleFacilityAccess(facility.id)}
-                        disabled={processing || !wallet || wallet.balance < 50}
-                        className="px-4 py-2 rounded-lg bg-lime-400 text-black font-semibold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {processing ? "Processing..." : "Access Now"}
-                      </button>
+        {cardData && (
+          <div className="space-y-8">
+            {/* Digital Card */}
+            <div className="relative">
+              <div className="bg-gradient-to-br from-lime-500 to-lime-600 rounded-[2rem] p-8 text-black relative overflow-hidden shadow-2xl shadow-lime-500/20">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-12 -translate-x-12"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <h2 className="text-2xl font-black tracking-tight">FitSwitch</h2>
+                      <p className="text-black/60 font-medium text-sm">Digital Fitness Card</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-black/60 uppercase tracking-widest">Balance</p>
+                      <p className="text-xl font-black">₹{cardData.walletBalance?.toFixed(0) || '0'}</p>
                     </div>
                   </div>
-                ))}
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-bold text-black/60 uppercase tracking-widest mb-1">Cardholder</p>
+                      <p className="text-xl font-black">{cardData.userName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-black/60 uppercase tracking-widest mb-1">Email</p>
+                      <p className="font-bold">{cardData.userEmail}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 pt-6 border-t border-black/20">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-black/60 uppercase tracking-widest">Active Access</p>
+                        <p className="font-black">
+                          {cardData.activeMemberships?.length || 0} Gyms • {cardData.activeSubscriptions?.length || 0} Facilities
+                        </p>
+                      </div>
+                      <div className="w-12 h-8 bg-black/20 rounded-lg flex items-center justify-center">
+                        <div className="w-6 h-4 bg-black rounded-sm"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Memberships */}
+            {cardData.activeMemberships && cardData.activeMemberships.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <span>🏋️</span> Active Gym Memberships
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {cardData.activeMemberships.map((membership) => (
+                    <div key={membership.membershipId} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-6">
+                      <h4 className="font-bold text-lg mb-2">{membership.gymName}</h4>
+                      <p className="text-zinc-400 text-sm mb-4">{membership.planName}</p>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-zinc-500">Valid until</span>
+                        <span className="font-bold text-lime-400">
+                          {new Date(membership.endDate).toLocaleDateString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Active Facility Subscriptions */}
+            {cardData.activeSubscriptions && cardData.activeSubscriptions.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <span>🎯</span> Active Facility Access
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {cardData.activeSubscriptions.map((subscription) => (
+                    <div key={subscription.subscriptionId} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-6">
+                      <h4 className="font-bold text-lg mb-1">{subscription.facilityName}</h4>
+                      <p className="text-zinc-500 text-sm mb-2">{subscription.gymName}</p>
+                      <p className="text-zinc-400 text-sm mb-4">{subscription.planName}</p>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-zinc-500">Valid until</span>
+                        <span className="font-bold text-purple-400">
+                          {new Date(subscription.endDate).toLocaleDateString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Active Subscriptions */}
+            {(!cardData.activeMemberships || cardData.activeMemberships.length === 0) && 
+             (!cardData.activeSubscriptions || cardData.activeSubscriptions.length === 0) && (
+              <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
+                <div className="text-6xl mb-6 opacity-20">💳</div>
+                <h3 className="text-2xl font-bold mb-2">No Active Access</h3>
+                <p className="text-zinc-500 mb-8 max-w-sm mx-auto">
+                  Your digital card is ready! Subscribe to gym plans or facility access to activate it.
+                </p>
+                <Link
+                  to="/gyms"
+                  className="inline-block px-8 py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-95"
+                >
+                  Explore Gyms
+                </Link>
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-8 text-center">
-          <Link to="/dashboard" className="underline text-zinc-200 hover:text-white">
-            ← Back to Dashboard
+        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
+          <Link to={getDashboardRoute()} className="text-zinc-500 hover:text-white transition-colors text-sm font-medium">
+            ← Return to Dashboard
           </Link>
         </div>
       </div>

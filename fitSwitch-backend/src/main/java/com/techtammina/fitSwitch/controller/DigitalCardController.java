@@ -1,6 +1,6 @@
 package com.techtammina.fitSwitch.controller;
 
-import com.techtammina.fitSwitch.dto.GymSessionResponse;
+import com.techtammina.fitSwitch.dto.DigitalCardResponse;
 import com.techtammina.fitSwitch.service.DigitalCardService;
 import com.techtammina.fitSwitch.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,13 +20,10 @@ public class DigitalCardController {
         this.jwtUtils = jwtUtils;
     }
 
-    @PostMapping("/checkin")
-    public ResponseEntity<GymSessionResponse> checkInWithDigitalCard(
-            @RequestParam Long gymId,
-            @RequestParam Long facilityId,
-            HttpServletRequest request) {
+    @GetMapping("/data")
+    public ResponseEntity<DigitalCardResponse> getDigitalCardData(HttpServletRequest request) {
         Long userId = jwtUtils.getUserIdFromRequest(request);
-        GymSessionResponse response = digitalCardService.checkInWithDigitalCard(userId, gymId, facilityId);
-        return ResponseEntity.ok(response);
+        DigitalCardResponse cardData = digitalCardService.getDigitalCardData(userId);
+        return ResponseEntity.ok(cardData);
     }
 }

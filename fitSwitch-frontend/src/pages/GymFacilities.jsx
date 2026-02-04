@@ -30,69 +30,90 @@ export default function GymFacilities() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white px-4 py-10">
-      <div className="max-w-4xl mx-auto bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
-        <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold">Gym Facilities</h2>
+    <div className="min-h-screen bg-black text-white px-6 py-12">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div>
+            <h2 className="text-4xl font-extrabold tracking-tight">Gym Facilities</h2>
+            <p className="text-zinc-400 mt-2 text-lg">
+              Manage services and amenities available in your facility.
+            </p>
+          </div>
 
           <button
             onClick={() => navigate(`/owner/gym/${gymId}/facilities/add`)}
-            className="bg-lime-500 hover:bg-lime-400 text-black font-semibold px-4 py-2 rounded-xl"
+            className="bg-lime-500 hover:bg-lime-400 text-black font-bold px-6 py-3 rounded-xl transition-all shadow-lg shadow-lime-500/20 flex items-center justify-center gap-2"
           >
-            + Add Facility
+            <span className="text-xl">+</span> Add Facility
           </button>
         </div>
 
-        <p className="text-zinc-300 text-sm mt-1">
-          Manage services available in your gym.
-        </p>
-
         {error && (
-          <div className="mt-4 bg-red-500/10 border border-red-500/30 text-red-200 p-3 rounded-lg text-sm">
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             {error}
           </div>
         )}
 
         {loading ? (
-          <p className="mt-6 text-zinc-300">Loading facilities...</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-lime-500/30 border-t-lime-500 rounded-full animate-spin"></div>
+            <p className="mt-4 text-zinc-500 font-medium">Loading your facilities...</p>
+          </div>
         ) : facilities.length === 0 ? (
-          <p className="mt-6 text-zinc-300">No facilities added yet.</p>
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-16 text-center">
+            <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-3xl text-zinc-500">🏢</span>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">No facilities yet</h3>
+            <p className="text-zinc-400 mb-8 max-w-sm mx-auto">
+              Start by adding your first facility to let users know what you offer.
+            </p>
+            <button
+              onClick={() => navigate(`/owner/gym/${gymId}/facilities/add`)}
+              className="text-lime-400 hover:text-lime-300 font-semibold"
+            >
+              Add your first facility →
+            </button>
+          </div>
         ) : (
-          <div className="mt-6 grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {facilities.map((f) => (
               <div
                 key={f.id}
-                className="p-4 rounded-xl border border-white/10 bg-black/30 flex justify-between items-start"
+                className="group p-6 rounded-3xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-700 transition-all duration-300"
               >
-                <div>
-                  <h3 className="text-xl font-semibold">{f.facilityName}</h3>
-                  <p className="text-zinc-300 text-sm mt-1">
-                    {f.description || "-"}
-                  </p>
-                  <p className="text-xs mt-2">
-                    Status:{" "}
-                    <span
-                      className={
-                        f.active ? "text-lime-400" : "text-red-300"
-                      }
-                    >
-                      {f.active ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                  </p>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white group-hover:text-lime-400 transition-colors">
+                      {f.facilityName}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`w-2 h-2 rounded-full ${f.active ? "bg-lime-500" : "bg-zinc-600"}`}></span>
+                      <span className={`text-xs font-bold uppercase tracking-wider ${f.active ? "text-lime-500" : "text-zinc-500"}`}>
+                        {f.active ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-2">
+                  {f.description || "No description provided for this facility."}
+                </p>
+
+                <div className="flex gap-3">
                   <Link
                     to={`/owner/facilities/edit/${f.id}`}
-                    className="px-4 py-2 text-sm rounded-xl bg-white/10 hover:bg-white/20"
+                    className="flex-1 text-center bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
                   >
-                    Edit
+                    Edit Details
                   </Link>
                   <Link
                     to={`/owner/facilities/${f.id}/plans`}
-                    className="px-4 py-2 text-sm rounded-xl bg-purple-500 hover:bg-purple-400 text-center"
+                    className="flex-1 text-center bg-lime-500/10 hover:bg-lime-500 text-lime-400 hover:text-black font-semibold py-3 rounded-xl transition-all text-sm border border-lime-500/20"
                   >
-                    Plans
+                    Manage Plans
                   </Link>
                 </div>
               </div>
@@ -100,12 +121,12 @@ export default function GymFacilities() {
           </div>
         )}
 
-        <div className="mt-8">
+        <div className="mt-12 pt-8 border-t border-zinc-900">
           <Link
             to="/dashboard"
-            className="text-lime-400 hover:underline text-sm"
+            className="inline-flex items-center gap-2 text-zinc-500 hover:text-lime-400 transition-colors font-medium"
           >
-            ← Back to Dashboard
+            <span>←</span> Back to Dashboard
           </Link>
         </div>
       </div>
