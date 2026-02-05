@@ -15,6 +15,7 @@ import java.util.Optional;
 public class OwnerStatsService {
 
     private final GymMembershipSessionRepository gymSessionRepository;
+    private final FacilitySessionRepository facilitySessionRepository;
     private final MembershipRepository membershipRepository;
     private final UserFacilitySubscriptionRepository facilitySubscriptionRepository;
     private final GymRepository gymRepository;
@@ -24,6 +25,7 @@ public class OwnerStatsService {
     private final GymPlanRepository gymPlanRepository;
 
     public OwnerStatsService(GymMembershipSessionRepository gymSessionRepository,
+                           FacilitySessionRepository facilitySessionRepository,
                            MembershipRepository membershipRepository,
                            UserFacilitySubscriptionRepository facilitySubscriptionRepository,
                            GymRepository gymRepository,
@@ -32,6 +34,7 @@ public class OwnerStatsService {
                            FacilityPlanRepository facilityPlanRepository,
                            GymPlanRepository gymPlanRepository) {
         this.gymSessionRepository = gymSessionRepository;
+        this.facilitySessionRepository = facilitySessionRepository;
         this.membershipRepository = membershipRepository;
         this.facilitySubscriptionRepository = facilitySubscriptionRepository;
         this.gymRepository = gymRepository;
@@ -142,6 +145,38 @@ public class OwnerStatsService {
             response.setLastCheckOut(latestSession.getCheckOutTime());
         }
 
+        // Session history for this gym (gym + facility)
+        List<UserSessionHistoryResponse> sessionHistory = new ArrayList<>();
+        List<UserSessionHistoryResponse> gymSessions = gymSessionRepository.findSessionHistoryByUserIdAndGymId(userId, gymId);
+        gymSessions.forEach(s -> s.setPlanType("GYM"));
+        sessionHistory.addAll(gymSessions);
+
+        List<FacilitySessionHistoryResponse> facilitySessions = facilitySessionRepository
+                .findFacilitySessionHistoryByUserIdAndGymId(userId, gymId);
+        for (FacilitySessionHistoryResponse fs : facilitySessions) {
+            UserSessionHistoryResponse entry = new UserSessionHistoryResponse(
+                    fs.getId(),
+                    fs.getGymName(),
+                    fs.getVisitDate(),
+                    fs.getCheckInTime(),
+                    fs.getCheckOutTime(),
+                    fs.getStatus(),
+                    "FACILITY"
+            );
+            sessionHistory.add(entry);
+        }
+
+        sessionHistory.sort((a, b) -> {
+            java.time.LocalDateTime t1 = a.getCheckInTime();
+            java.time.LocalDateTime t2 = b.getCheckInTime();
+            if (t1 == null && t2 == null) return 0;
+            if (t1 == null) return 1;
+            if (t2 == null) return -1;
+            return t2.compareTo(t1);
+        });
+
+        response.setSessionHistory(sessionHistory);
+
         return response;
     }
 
@@ -249,7 +284,26 @@ public class OwnerStatsService {
         }
 
         LocalDate today = LocalDate.now();
-        return gymSessionRepository.findTodayVisitsByGymId(gymId, today);
+        List<OwnerTodayVisitResponse> visits = new ArrayList<>();
+
+        List<OwnerTodayVisitResponse> gymVisits = gymSessionRepository.findTodayVisitsByGymId(gymId, today);
+        gymVisits.forEach(v -> v.setPlanType("GYM"));
+        visits.addAll(gymVisits);
+
+        List<OwnerTodayVisitResponse> facilityVisits = facilitySessionRepository.findTodayFacilityVisitsByGymId(gymId, today);
+        facilityVisits.forEach(v -> v.setPlanType("FACILITY"));
+        visits.addAll(facilityVisits);
+
+        visits.sort((a, b) -> {
+            LocalDateTime t1 = a.getCheckInTime();
+            LocalDateTime t2 = b.getCheckInTime();
+            if (t1 == null && t2 == null) return 0;
+            if (t1 == null) return 1;
+            if (t2 == null) return -1;
+            return t2.compareTo(t1);
+        });
+
+        return visits;
     }
 
     public List<OwnerGymMemberResponse> getGymMembers(Long ownerId, Long gymId) {

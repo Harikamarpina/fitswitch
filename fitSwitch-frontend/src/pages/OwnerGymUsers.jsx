@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getGymUsers } from "../api/statsApi";
+import { getGymUsers, getTodayVisits } from "../api/statsApi";
 import { getGymPlans } from "../api/planApi";
 import { getGymPlanUsers, getGymFacilitiesOwner, getFacilityPlanUsers } from "../api/facilityApi";
 import { getGymFacilityPlans } from "../api/facilityApi";
@@ -8,6 +8,7 @@ import { getGymFacilityPlans } from "../api/facilityApi";
 export default function OwnerGymUsers() {
   const { gymId } = useParams();
   const [users, setUsers] = useState([]);
+  const [todayVisits, setTodayVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -21,8 +22,13 @@ export default function OwnerGymUsers() {
       setError("");
       
       // Try main endpoint first
-      const response = await getGymUsers(gymId);
-      const userData = response?.data || [];
+      const [usersRes, visitsRes] = await Promise.all([
+        getGymUsers(gymId),
+        getTodayVisits(gymId).catch(() => ({ data: [] }))
+      ]);
+
+      const userData = usersRes?.data || [];
+      setTodayVisits(visitsRes?.data || []);
       
       if (Array.isArray(userData) && userData.length > 0) {
         setUsers(userData);
@@ -77,6 +83,7 @@ export default function OwnerGymUsers() {
       console.error('API Error:', err);
       setError("Failed to load gym users");
       setUsers([]);
+      setTodayVisits([]);
     } finally {
       setLoading(false);
     }
@@ -88,6 +95,14 @@ export default function OwnerGymUsers() {
       day: "2-digit",
       month: "short",
       year: "numeric"
+    });
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
@@ -138,6 +153,55 @@ export default function OwnerGymUsers() {
             {error}
           </div>
         )}
+
+        <div className="mb-12">
+          <div className="flex items-center gap-4 mb-6">
+            <h3 className="text-xl font-bold">Today's Visits</h3>
+            <div className="h-px flex-1 bg-zinc-800"></div>
+            <div className="text-sm font-bold text-zinc-500">
+              {todayVisits.length} total
+            </div>
+          </div>
+
+          {todayVisits.length === 0 ? (
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8 text-center text-zinc-500">
+              No visits recorded today.
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todayVisits.map((visit) => (
+                <div key={`${visit.userId}-${visit.checkInTime}`} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-white">{visit.userName}</div>
+                      <div className="text-xs text-zinc-500 truncate">{visit.email}</div>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${
+                      visit.planType === "FACILITY"
+                        ? "bg-purple-500/10 text-purple-400"
+                        : "bg-lime-500/10 text-lime-400"
+                    }`}>
+                      {visit.planType || "GYM"}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-black/30 rounded-xl p-2">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-in</div>
+                      <div className="text-zinc-200 font-semibold">{formatTime(visit.checkInTime)}</div>
+                    </div>
+                    <div className="bg-black/30 rounded-xl p-2">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-out</div>
+                      <div className="text-zinc-200 font-semibold">{formatTime(visit.checkOutTime)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-[10px] uppercase font-bold text-zinc-500">
+                    Status: <span className="text-zinc-300">{visit.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {users.length === 0 ? (
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-20 text-center">

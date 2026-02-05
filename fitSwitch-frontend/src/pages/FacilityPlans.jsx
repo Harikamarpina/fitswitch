@@ -48,6 +48,8 @@ export default function FacilityPlans() {
   const handleSelectPlan = (plan) => {
     const planData = {
       facilityPlanId: plan.id,
+      gymId: parseInt(gymId, 10),
+      facilityId: plan.facilityId || parseInt(facilityId, 10),
       gymName: plan.gymName,
       facilityName: plan.facilityName,
       planName: plan.planName,

@@ -38,14 +38,7 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
         setActiveSession(null);
       }
       
-      // Check if user has visited today (even if session is not active)
-      if (dashboardStats?.lastVisitDate) {
-        const today = new Date().toDateString();
-        const lastVisit = new Date(dashboardStats.lastVisitDate).toDateString();
-        if (today === lastVisit) {
-          setHasCheckedInToday(true);
-        }
-      }
+      // Do not use global lastVisitDate; it can belong to a different gym
     };
     
     if (membership?.id) {

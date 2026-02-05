@@ -19,7 +19,7 @@ public class WalletTransaction {
     private Long walletId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 32)
     private TransactionType type;
 
     @Column(nullable = false, precision = 10, scale = 2)

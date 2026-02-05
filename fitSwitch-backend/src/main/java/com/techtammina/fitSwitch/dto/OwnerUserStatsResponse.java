@@ -11,6 +11,7 @@ public class OwnerUserStatsResponse {
     private String email;
     private List<UserMembershipDto> memberships;
     private List<UserFacilitySubscriptionDto> facilitySubscriptions;
+    private List<UserSessionHistoryResponse> sessionHistory;
     private int totalVisitCount;
     private LocalDateTime lastCheckIn;
     private LocalDateTime lastCheckOut;
@@ -30,6 +31,9 @@ public class OwnerUserStatsResponse {
 
     public List<UserFacilitySubscriptionDto> getFacilitySubscriptions() { return facilitySubscriptions; }
     public void setFacilitySubscriptions(List<UserFacilitySubscriptionDto> facilitySubscriptions) { this.facilitySubscriptions = facilitySubscriptions; }
+
+    public List<UserSessionHistoryResponse> getSessionHistory() { return sessionHistory; }
+    public void setSessionHistory(List<UserSessionHistoryResponse> sessionHistory) { this.sessionHistory = sessionHistory; }
 
     public int getTotalVisitCount() { return totalVisitCount; }
     public void setTotalVisitCount(int totalVisitCount) { this.totalVisitCount = totalVisitCount; }

@@ -11,6 +11,7 @@ export default function MembershipSwitch() {
   const [selectedGym, setSelectedGym] = useState(null);
   const [gymPlans, setGymPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [confirmChecked, setConfirmChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -32,7 +33,7 @@ export default function MembershipSwitch() {
       // Filter only active memberships
       const activeMemberships = membershipsRes.data.filter(m => m.status === 'ACTIVE');
       setMemberships(activeMemberships);
-      setGyms(gymsRes);
+      setGyms(gymsRes?.data || []);
     } catch (err) {
       setError(err.message || "Failed to load data");
     } finally {
@@ -43,9 +44,10 @@ export default function MembershipSwitch() {
   const handleGymSelect = async (gym) => {
     setSelectedGym(gym);
     setSelectedPlan(null);
+    setConfirmChecked(false);
     try {
-      const response = await axiosInstance.get(`/public/gyms/${gym.id}/plans`);
-      setGymPlans(response.data);
+      const response = await axiosInstance.get(`/gyms/${gym.id}/plans`);
+      setGymPlans(response.data || []);
     } catch (err) {
       setError("Failed to load gym plans");
     }
@@ -56,20 +58,25 @@ export default function MembershipSwitch() {
       setError("Please select membership, gym, and plan");
       return;
     }
+    if (!confirmChecked) {
+      setError("Please confirm the membership switch terms");
+      return;
+    }
 
     try {
       setSwitching(true);
       setError("");
       setSuccess("");
 
-      await switchMembership(selectedMembership.id, selectedGym.id, selectedPlan.id);
-      setSuccess("Membership switched successfully! Redirecting to dashboard...");
+      const res = await switchMembership(selectedMembership.id, selectedGym.id, selectedPlan.id);
+      setSuccess(res?.message || "Switch request submitted");
       
       setTimeout(() => {
         navigate("/dashboard");
       }, 2000);
     } catch (err) {
-      setError(err.message || "Failed to switch membership");
+      const msg = err?.response?.data?.message || err?.message || "Failed to switch membership";
+      setError(msg);
     } finally {
       setSwitching(false);
     }
@@ -264,6 +271,15 @@ export default function MembershipSwitch() {
                         <span className="font-black text-white">{selectedPlan.planName} (₹{selectedPlan.price})</span>
                       </div>
                     </div>
+                    <div className="bg-black/30 border border-zinc-800 rounded-2xl p-4">
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Wallet Impact</div>
+                      <div className="text-sm text-zinc-300">
+                        New plan price: <span className="font-bold text-white">INR {selectedPlan.price}</span>
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-2">
+                        Remaining balance from your current membership will be calculated at switch time and applied to your wallet.
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="w-full md:w-96">
@@ -274,10 +290,19 @@ export default function MembershipSwitch() {
                           <strong>Note:</strong> Pro-rated calculations will apply. Your remaining balance will be credited/debited from your wallet accordingly.
                         </p>
                       </div>
+                      <label className="flex items-center gap-3 text-xs text-zinc-300 font-medium mt-2">
+                        <input
+                          type="checkbox"
+                          checked={confirmChecked}
+                          onChange={(e) => setConfirmChecked(e.target.checked)}
+                          className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-lime-500 focus:ring-lime-500/30"
+                        />
+                        I understand my current membership will end when the switch is completed.
+                      </label>
                     </div>
                     <button
                       onClick={handleSwitch}
-                      disabled={switching}
+                      disabled={switching || !confirmChecked}
                       className="w-full py-5 rounded-2xl bg-lime-500 text-black font-black hover:bg-lime-400 transition-all shadow-2xl shadow-lime-500/20 disabled:opacity-50"
                     >
                       {switching ? "INITIATING SWITCH..." : "CONFIRM & SWITCH"}
@@ -294,3 +319,5 @@ export default function MembershipSwitch() {
     </div>
   );
 }
+
+

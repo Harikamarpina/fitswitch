@@ -128,6 +128,62 @@ export default function OwnerUserStats() {
           </div>
         </div>
 
+        {/* Session History */}
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-8">
+          
+            <h3 className="text-2xl font-black tracking-tight uppercase">Session History</h3>
+          </div>
+
+          {userStats.sessionHistory && userStats.sessionHistory.length > 0 ? (
+            <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
+              {userStats.sessionHistory.map((session) => (
+                <div key={`${session.planType}-${session.id}`} className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-bold text-white">
+                        {session.planType === "FACILITY" ? "Facility Session" : "Gym Session"}
+                      </div>
+                      <div className="text-xs text-zinc-500">{session.gymName}</div>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                      session.planType === "FACILITY"
+                        ? "bg-purple-500/10 text-purple-400"
+                        : "bg-lime-500/10 text-lime-400"
+                    }`}>
+                      {session.planType}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="bg-black/30 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Visit Date</div>
+                      <div className="text-zinc-200 font-semibold">{formatDate(session.visitDate)}</div>
+                    </div>
+                    <div className="bg-black/30 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-in</div>
+                      <div className="text-zinc-200 font-semibold">{formatDateTime(session.checkInTime)}</div>
+                    </div>
+                    <div className="bg-black/30 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-out</div>
+                      <div className="text-zinc-200 font-semibold">{formatDateTime(session.checkOutTime)}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-[10px] uppercase font-bold text-zinc-500">
+                    Status: <span className="text-zinc-300">{session.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-zinc-900/20 border border-zinc-800 border-dashed rounded-3xl p-10 text-center">
+              <p className="text-zinc-500 font-medium">No sessions found....
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Gym Memberships */}
           <section>

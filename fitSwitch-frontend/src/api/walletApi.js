@@ -56,7 +56,7 @@ export const digitalCardCheckIn = async (gymId, facilityId) => {
 // Switch membership
 export const switchMembership = async (currentMembershipId, newGymId, newPlanId) => {
   try {
-    const response = await axiosInstance.post('/membership/switch', {
+    const response = await axiosInstance.post('/api/membership/switch', {
       currentMembershipId,
       newGymId,
       newPlanId

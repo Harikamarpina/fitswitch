@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getGymDetails, getGymFacilities, getGymPlans } from "../api/publicGymApi";
 import { getGymFacilityPlans } from "../api/facilityApi";
+import { useFacility } from "../api/walletApi";
 
 export default function GymDetails() {
   const { gymId } = useParams();
@@ -12,6 +13,9 @@ export default function GymDetails() {
   const [facilityPlans, setFacilityPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cardMessage, setCardMessage] = useState("");
+  const [cardError, setCardError] = useState("");
+  const [cardLoading, setCardLoading] = useState({});
 
   useEffect(() => {
     const fetchGymData = async () => {
@@ -49,6 +53,39 @@ export default function GymDetails() {
     
     localStorage.setItem('selectedPlan', JSON.stringify(planData));
     navigate('/purchase-plan');
+  };
+
+  const handleUseCard = async (facilityId) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    setCardMessage("");
+    setCardError("");
+
+    if (!token || token === "undefined" || token === "null") {
+      navigate("/login");
+      return;
+    }
+
+    if (role !== "USER") {
+      setCardError("Only users can access facilities with the digital card.");
+      return;
+    }
+
+    try {
+      setCardLoading((prev) => ({ ...prev, [facilityId]: true }));
+      const response = await useFacility(parseInt(gymId, 10), facilityId);
+      if (response?.success === false) {
+        setCardError(response?.message || "Facility access failed.");
+      } else {
+        setCardMessage("Facility access granted. Enjoy your session!");
+      }
+    } catch (err) {
+      const msg = err?.message || "Facility access failed.";
+      setCardError(msg);
+    } finally {
+      setCardLoading((prev) => ({ ...prev, [facilityId]: false }));
+    }
   };
 
   if (loading) {
@@ -107,6 +144,15 @@ export default function GymDetails() {
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-12">
+            {(cardMessage || cardError) && (
+              <div className={`p-4 rounded-2xl text-sm font-medium ${
+                cardError
+                  ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                  : "bg-lime-400/10 border border-lime-400/20 text-lime-400"
+              }`}>
+                {cardError || cardMessage}
+              </div>
+            )}
             
             {/* Membership Plans Section */}
             <section>
@@ -177,6 +223,20 @@ export default function GymDetails() {
                             Add-ons
                           </Link>
                         )}
+                      </div>
+
+                      <div className="mt-5">
+                        <button
+                          onClick={() => handleUseCard(facility.id)}
+                          disabled={cardLoading[facility.id]}
+                          className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
+                            cardLoading[facility.id]
+                              ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                              : "bg-lime-500 text-black hover:bg-lime-400"
+                          }`}
+                        >
+                          {cardLoading[facility.id] ? "Processing..." : "Use Digital Card (â‚¹100)"}
+                        </button>
                       </div>
                     </div>
                   ))}

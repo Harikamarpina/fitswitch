@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { getDashboardRoute } from "../utils/navigation";
+import { getPublicGyms, getGymFacilities } from "../api/publicGymApi";
+import { useFacility } from "../api/walletApi";
 
 export default function DigitalCard() {
+  const navigate = useNavigate();
   const [cardData, setCardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showUseCard, setShowUseCard] = useState(false);
+  const [gyms, setGyms] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [selectedGymId, setSelectedGymId] = useState("");
+  const [selectedFacilityId, setSelectedFacilityId] = useState("");
+  const [useCardLoading, setUseCardLoading] = useState(false);
+  const [useCardMessage, setUseCardMessage] = useState("");
+  const [useCardError, setUseCardError] = useState("");
 
   useEffect(() => {
     fetchCardData();
@@ -21,6 +32,63 @@ export default function DigitalCard() {
       setError(err.response?.data?.message || "Failed to load digital card data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openUseCard = async () => {
+    setShowUseCard(true);
+    setUseCardMessage("");
+    setUseCardError("");
+    setSelectedGymId("");
+    setSelectedFacilityId("");
+    setFacilities([]);
+    try {
+      const res = await getPublicGyms();
+      setGyms(res.data || []);
+    } catch (err) {
+      setUseCardError("Failed to load gyms");
+    }
+  };
+
+  const handleGymChange = async (gymId) => {
+    setSelectedGymId(gymId);
+    setSelectedFacilityId("");
+    setFacilities([]);
+    if (!gymId) return;
+
+    try {
+      const res = await getGymFacilities(gymId);
+      setFacilities(res.data || []);
+    } catch (err) {
+      setUseCardError("Failed to load facilities");
+    }
+  };
+
+  const handleUseCard = async (e) => {
+    e.preventDefault();
+    setUseCardMessage("");
+    setUseCardError("");
+
+    if (!selectedGymId || !selectedFacilityId) {
+      setUseCardError("Please select a gym and a facility.");
+      return;
+    }
+
+    try {
+      setUseCardLoading(true);
+      const response = await useFacility(parseInt(selectedGymId, 10), parseInt(selectedFacilityId, 10));
+      if (response?.success === false) {
+        setUseCardError(response?.message || "Facility access failed.");
+      } else {
+        setUseCardMessage("Facility access granted. Enjoy your session!");
+        fetchCardData();
+        setShowUseCard(false);
+        navigate("/user/dashboard");
+      }
+    } catch (err) {
+      setUseCardError(err?.message || "Facility access failed.");
+    } finally {
+      setUseCardLoading(false);
     }
   };
 
@@ -174,14 +242,93 @@ export default function DigitalCard() {
                   className="inline-block px-8 py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-95"
                 >
                   Explore Gyms
-                </Link>
+                  </Link>
+                </div>
+              )}
+
+              <div className="flex justify-center">
+                <button
+                  onClick={openUseCard}
+                  className="px-8 py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-95"
+                >
+                  Use Digital Card
+                </button>
               </div>
-            )}
           </div>
         )}
 
         <div className="mt-20 pt-10 border-t border-zinc-900"></div>
       </div>
+
+      {showUseCard && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold">Use Digital Card</h3>
+                <p className="text-zinc-500 text-sm">Select a gym and facility for pay-per-use access.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUseCard(false)}
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <span className="text-xl">×</span>
+              </button>
+            </div>
+
+            {useCardError && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm">
+                {useCardError}
+              </div>
+            )}
+            {useCardMessage && (
+              <div className="mb-4 bg-lime-500/10 border border-lime-500/20 text-lime-400 p-3 rounded-xl text-sm font-bold">
+                {useCardMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleUseCard} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Gym</label>
+                <select
+                  value={selectedGymId}
+                  onChange={(e) => handleGymChange(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-black border border-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all"
+                >
+                  <option value="">Select a gym</option>
+                  {gyms.map((gym) => (
+                    <option key={gym.id} value={gym.id}>{gym.gymName}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Facility</label>
+                <select
+                  value={selectedFacilityId}
+                  onChange={(e) => setSelectedFacilityId(e.target.value)}
+                  disabled={!selectedGymId}
+                  className="w-full px-4 py-3 rounded-xl bg-black border border-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all disabled:opacity-60"
+                >
+                  <option value="">Select a facility</option>
+                  {facilities.map((facility) => (
+                    <option key={facility.id} value={facility.id}>{facility.facilityName}</option>
+                  ))}
+                </select>
+              </div>
+
+                <button
+                  type="submit"
+                  disabled={useCardLoading}
+                  className="w-full py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  {useCardLoading ? "Processing..." : "Confirm Pay-Per-Use (â‚¹100)"}
+                </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

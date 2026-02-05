@@ -11,10 +11,17 @@ export default function Wallet() {
   const [addMoneyAmount, setAddMoneyAmount] = useState("");
   const [addingMoney, setAddingMoney] = useState(false);
   const [showAddMoney, setShowAddMoney] = useState(false);
+  const [topUpSuccess, setTopUpSuccess] = useState("");
 
   useEffect(() => {
     fetchWalletData();
   }, []);
+
+  useEffect(() => {
+    if (!topUpSuccess) return;
+    const timer = setTimeout(() => setTopUpSuccess(""), 4000);
+    return () => clearTimeout(timer);
+  }, [topUpSuccess]);
 
   const fetchWalletData = async () => {
     try {
@@ -42,10 +49,12 @@ export default function Wallet() {
     try {
       setAddingMoney(true);
       setError("");
+      setTopUpSuccess("");
       await addMoney(parseFloat(addMoneyAmount));
       setAddMoneyAmount("");
       setShowAddMoney(false);
       await fetchWalletData(); // Refresh data
+      setTopUpSuccess("Wallet topped up successfully.");
     } catch (err) {
       setError(err.message || "Failed to add money");
     } finally {
@@ -123,6 +132,12 @@ export default function Wallet() {
         {error && (
           <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-medium">
             {error}
+          </div>
+        )}
+
+        {topUpSuccess && (
+          <div className="mb-8 bg-lime-400/10 border border-lime-400/20 text-lime-400 p-4 rounded-2xl text-sm font-bold">
+            {topUpSuccess}
           </div>
         )}
 

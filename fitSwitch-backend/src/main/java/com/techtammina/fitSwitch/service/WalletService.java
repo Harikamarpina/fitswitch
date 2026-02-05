@@ -18,6 +18,8 @@ public class WalletService {
     private final OwnerEarningRepository ownerEarningRepository;
     private final GymRepository gymRepository;
     private final GymFacilityRepository facilityRepository;
+    private final FacilityPlanRepository facilityPlanRepository;
+    private final UserFacilitySubscriptionRepository facilitySubscriptionRepository;
     private final EmailService emailService;
 
     public WalletService(UserWalletRepository walletRepository,
@@ -25,12 +27,16 @@ public class WalletService {
                         OwnerEarningRepository ownerEarningRepository,
                         GymRepository gymRepository,
                         GymFacilityRepository facilityRepository,
+                        FacilityPlanRepository facilityPlanRepository,
+                        UserFacilitySubscriptionRepository facilitySubscriptionRepository,
                         EmailService emailService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.ownerEarningRepository = ownerEarningRepository;
         this.gymRepository = gymRepository;
         this.facilityRepository = facilityRepository;
+        this.facilityPlanRepository = facilityPlanRepository;
+        this.facilitySubscriptionRepository = facilitySubscriptionRepository;
         this.emailService = emailService;
     }
 
@@ -88,6 +94,14 @@ public class WalletService {
             throw new RuntimeException("Facility does not belong to the selected gym");
         }
 
+        // If user already has active facility subscription today, allow access without extra charge
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.util.Optional<UserFacilitySubscription> existingActive = facilitySubscriptionRepository
+                .findByUserIdAndFacilityIdAndStatus(userId, request.getFacilityId(), FacilitySubscriptionStatus.ACTIVE);
+        if (existingActive.isPresent() && !existingActive.get().getEndDate().isBefore(today)) {
+            return new ApiResponse(true, "Facility access already active for today");
+        }
+
         // Calculate facility usage cost (assuming 10% of monthly plan cost for single use)
         BigDecimal usageCost = calculateFacilityUsageCost(request.getGymId());
 
@@ -113,6 +127,19 @@ public class WalletService {
         transaction.setFacilityId(request.getFacilityId());
         transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
+        // Create one-day facility subscription for access
+        FacilityPlan payPerUsePlan = getOrCreatePayPerUsePlan(gym, facility, usageCost);
+        UserFacilitySubscription subscription = new UserFacilitySubscription();
+        subscription.setUserId(userId);
+        subscription.setGymId(request.getGymId());
+        subscription.setFacilityId(request.getFacilityId());
+        subscription.setFacilityPlanId(payPerUsePlan.getId());
+        subscription.setStartDate(today);
+        subscription.setEndDate(today);
+        subscription.setStatus(FacilitySubscriptionStatus.ACTIVE);
+        subscription.setCreatedAt(LocalDateTime.now());
+        facilitySubscriptionRepository.save(subscription);
 
         // Credit gym owner
         OwnerEarning earning = new OwnerEarning();
@@ -148,10 +175,28 @@ public class WalletService {
         return new ApiResponse(true, "Facility access granted successfully");
     }
 
+    private FacilityPlan getOrCreatePayPerUsePlan(Gym gym, GymFacility facility, BigDecimal usageCost) {
+        String planName = "Pay Per Use";
+        return facilityPlanRepository.findByFacilityIdAndPlanNameIgnoreCase(facility.getId(), planName)
+                .orElseGet(() -> {
+                    FacilityPlan plan = new FacilityPlan();
+                    plan.setGymId(gym.getId());
+                    plan.setFacilityId(facility.getId());
+                    plan.setPlanName(planName);
+                    plan.setDescription("One-day access via digital card");
+                    plan.setDurationDays(1);
+                    plan.setPrice(usageCost);
+                    plan.setActive(true);
+                    plan.setCreatedAt(LocalDateTime.now());
+                    plan.setUpdatedAt(LocalDateTime.now());
+                    return facilityPlanRepository.save(plan);
+                });
+    }
+
     private BigDecimal calculateFacilityUsageCost(Long gymId) {
-        // Simple logic: fixed cost of 50 per facility usage
+        // Simple logic: fixed cost of 100 per facility usage
         // In real implementation, this could be configurable per facility
-        return new BigDecimal("50.00");
+        return new BigDecimal("100.00");
     }
 
     public List<WalletTransactionResponse> getTransactionHistory(Long userId) {

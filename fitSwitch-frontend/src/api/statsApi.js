@@ -14,3 +14,8 @@ export const getGymUsers = (gymId) => {
 export const getUserStats = (gymId, userId) => {
   return axiosInstance.get(`/owner/gyms/${gymId}/users/${userId}/stats`);
 };
+
+// Owner today visits
+export const getTodayVisits = (gymId) => {
+  return axiosInstance.get(`/owner/gyms/${gymId}/visits/today`);
+};

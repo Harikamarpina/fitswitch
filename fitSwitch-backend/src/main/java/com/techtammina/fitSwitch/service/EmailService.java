@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 public class EmailService {
@@ -65,6 +66,27 @@ public class EmailService {
             gymName, requiredAmount
         );
         
+        message.setText(messageText);
+        mailSender.send(message);
+    }
+
+    public void sendMembershipConfirmation(String userEmail, String gymName, String planName,
+                                           LocalDate startDate, LocalDate endDate, BigDecimal amount) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(userEmail);
+        message.setSubject("FitSwitch - Membership Confirmation");
+
+        String messageText = String.format(
+            "Your membership is confirmed!\n\n" +
+            "Gym: %s\n" +
+            "Plan: %s\n" +
+            "Start Date: %s\n" +
+            "End Date: %s\n" +
+            "Amount Paid: INR %.2f\n\n" +
+            "Thank you for choosing FitSwitch.",
+            gymName, planName, startDate, endDate, amount
+        );
+
         message.setText(messageText);
         mailSender.send(message);
     }

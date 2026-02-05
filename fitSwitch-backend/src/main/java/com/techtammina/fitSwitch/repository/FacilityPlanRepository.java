@@ -12,4 +12,6 @@ public interface FacilityPlanRepository extends JpaRepository<FacilityPlan, Long
     List<FacilityPlan> findByFacilityIdAndActiveTrue(Long facilityId);
 
     List<FacilityPlan> findByFacilityId(Long facilityId);
+
+    java.util.Optional<FacilityPlan> findByFacilityIdAndPlanNameIgnoreCase(Long facilityId, String planName);
 }

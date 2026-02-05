@@ -22,19 +22,25 @@ public class MembershipService {
     private final OwnerEarningRepository ownerEarningRepository;
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public MembershipService(MembershipRepository membershipRepository, 
                            GymRepository gymRepository, 
                            GymPlanRepository planRepository,
                            OwnerEarningRepository ownerEarningRepository,
                            UserWalletRepository walletRepository,
-                           WalletTransactionRepository transactionRepository) {
+                           WalletTransactionRepository transactionRepository,
+                           UserRepository userRepository,
+                           EmailService emailService) {
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
         this.planRepository = planRepository;
         this.ownerEarningRepository = ownerEarningRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -79,18 +85,17 @@ public class MembershipService {
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        // TODO: Fix database schema for wallet_transactions.type column length
         // Create wallet transaction
-        // WalletTransaction transaction = new WalletTransaction();
-        // transaction.setUserId(userId);
-        // transaction.setWalletId(wallet.getId());
-        // transaction.setType(WalletTransaction.TransactionType.SUB);
-        // transaction.setAmount(plan.getPrice().negate());
-        // transaction.setBalanceAfter(newBalance);
-        // transaction.setDescription("Membership subscription: " + plan.getPlanName());
-        // transaction.setGymId(request.getGymId());
-        // transaction.setCreatedAt(LocalDateTime.now());
-        // transactionRepository.save(transaction);
+        WalletTransaction transaction = new WalletTransaction();
+        transaction.setUserId(userId);
+        transaction.setWalletId(wallet.getId());
+        transaction.setType(WalletTransaction.TransactionType.SUB);
+        transaction.setAmount(plan.getPrice().negate());
+        transaction.setBalanceAfter(newBalance);
+        transaction.setDescription("Membership subscription: " + plan.getPlanName());
+        transaction.setGymId(request.getGymId());
+        transaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(transaction);
 
         // Create membership
         Membership membership = new Membership();
@@ -133,6 +138,17 @@ public class MembershipService {
         ownerWalletTxn.setMembershipId(saved.getId());
         ownerWalletTxn.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(ownerWalletTxn);
+
+        userRepository.findById(userId).ifPresent(user ->
+                emailService.sendMembershipConfirmation(
+                        user.getEmail(),
+                        gym.getGymName(),
+                        plan.getPlanName(),
+                        saved.getStartDate(),
+                        saved.getEndDate(),
+                        plan.getPrice()
+                )
+        );
         
         return mapToResponse(saved, gym, plan);
     }

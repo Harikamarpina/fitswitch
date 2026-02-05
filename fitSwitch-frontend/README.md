@@ -14,3 +14,13 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Manual Test Checklist
+
+1. Register a new user, verify OTP, and log in.
+2. Top up wallet and confirm balance updates.
+3. Browse gyms, select a plan, and purchase membership.
+4. Open Digital Card and verify active memberships display.
+5. Use Digital Card on a facility (pay-per-use) and verify wallet transaction.
+6. Check user dashboard for active membership and session entries.
+7. Owner login: verify earnings and wallet balance updates.

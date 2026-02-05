@@ -49,7 +49,7 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER", "USER"]}>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -59,11 +59,18 @@ export default function App() {
         <Route path="/gyms" element={<PublicGyms />} />
         <Route path="/gyms/map" element={<GymMap />} />
         <Route path="/gyms/:gymId" element={<GymDetails />} />
-        <Route path="/purchase-plan" element={<PurchasePlan />} />
+        <Route
+          path="/purchase-plan"
+          element={
+            <ProtectedRoute allowedRoles={["USER"]}>
+              <PurchasePlan />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/user/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <UserDashboard />
             </ProtectedRoute>
           }
@@ -71,17 +78,24 @@ export default function App() {
         <Route
           path="/user/gym/:gymId/visit"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <UserGymVisit />
             </ProtectedRoute>
           }
         />
         <Route path="/gyms/:gymId/facilities/:facilityId/plans" element={<FacilityPlans />} />
-        <Route path="/purchase-facility-plan" element={<PurchaseFacilityPlan />} />
+        <Route
+          path="/purchase-facility-plan"
+          element={
+            <ProtectedRoute allowedRoles={["USER"]}>
+              <PurchaseFacilityPlan />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/user/cancellation-requests"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <UserCancellationRequests />
             </ProtectedRoute>
           }
@@ -91,7 +105,7 @@ export default function App() {
         <Route
           path="/wallet"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER", "USER"]}>
               <Wallet />
             </ProtectedRoute>
           }
@@ -99,7 +113,7 @@ export default function App() {
         <Route
           path="/digital-card"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <DigitalCard />
             </ProtectedRoute>
           }
@@ -107,7 +121,7 @@ export default function App() {
         <Route
           path="/membership/switch"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <MembershipSwitch />
             </ProtectedRoute>
           }
@@ -115,7 +129,7 @@ export default function App() {
         <Route
           path="/user/sessions"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["USER"]}>
               <SessionHistory />
             </ProtectedRoute>
           }
@@ -124,7 +138,7 @@ export default function App() {
         <Route
           path="/owner/facilities/:facilityId/plans"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <OwnerFacilityPlans />
             </ProtectedRoute>
           }
@@ -132,7 +146,7 @@ export default function App() {
         <Route
           path="/owner/facilities/:facilityId/plans/add"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <AddFacilityPlan />
             </ProtectedRoute>
           }
@@ -142,7 +156,7 @@ export default function App() {
         <Route
           path="/owner/gyms"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <OwnerMyGyms />
             </ProtectedRoute>
           }
@@ -151,7 +165,7 @@ export default function App() {
         <Route
           path="/owner/gyms/add"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <OwnerAddGym />
             </ProtectedRoute>
           }
@@ -160,7 +174,7 @@ export default function App() {
         <Route
           path="/owner/gyms/edit/:gymId"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <OwnerEditGym />
             </ProtectedRoute>
           }
@@ -170,7 +184,7 @@ export default function App() {
         <Route
           path="/owner/earnings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <OwnerEarnings />
             </ProtectedRoute>
           }
@@ -180,16 +194,16 @@ export default function App() {
         <Route
           path="/owner/unsubscribe-requests"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["OWNER"]}>
               <UnsubscribeRequests />
             </ProtectedRoute>
           }
         />
 
-        <Route
+<Route
   path="/owner/gym/:gymId/facilities"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["OWNER"]}>
       <GymFacilities />
     </ProtectedRoute>
   }
@@ -198,7 +212,7 @@ export default function App() {
 <Route
   path="/owner/gym/:gymId/facilities/add"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["OWNER"]}>
       <OwnerAddFacility />
     </ProtectedRoute>
   }
@@ -207,7 +221,7 @@ export default function App() {
 <Route
   path="/owner/facilities/edit/:facilityId"
   element={
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["OWNER"]}>
       <OwnerEditFacility />
     </ProtectedRoute>
   }
@@ -215,7 +229,7 @@ export default function App() {
 <Route
     path="/owner/gyms/:gymId/plans"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <GymPlan />
       </ProtectedRoute>
     }
@@ -224,7 +238,7 @@ export default function App() {
   <Route
     path="/owner/gyms/:gymId/plans/add"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <AddGymPlan />
       </ProtectedRoute>
     }
@@ -233,7 +247,7 @@ export default function App() {
   <Route
     path="/owner/plans/edit/:planId"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <EditGymPlan />
       </ProtectedRoute>
     }
@@ -243,7 +257,7 @@ export default function App() {
   <Route
     path="/owner/gyms/:gymId/users"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <OwnerGymUsers />
       </ProtectedRoute>
     }
@@ -252,7 +266,7 @@ export default function App() {
   <Route
     path="/owner/gyms/:gymId/users/:userId/stats"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <OwnerUserStats />
       </ProtectedRoute>
     }
@@ -261,7 +275,7 @@ export default function App() {
   <Route
     path="/owner/facilities/:facilityId/plans/:planId/users"
     element={
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["OWNER"]}>
         <PlanUsers />
       </ProtectedRoute>
     }

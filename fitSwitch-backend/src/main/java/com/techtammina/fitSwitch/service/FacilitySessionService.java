@@ -51,6 +51,11 @@ public class FacilitySessionService {
         }
 
         LocalDate today = LocalDate.now();
+        if (subscription.getEndDate().isBefore(today)) {
+            subscription.setStatus(FacilitySubscriptionStatus.EXPIRED);
+            subscriptionRepository.save(subscription);
+            throw new RuntimeException("Facility subscription has expired");
+        }
         Optional<FacilitySession> existing = sessionRepository
                 .findFirstByFacilitySubscriptionIdAndVisitDateOrderByCheckInTimeDesc(
                         facilitySubscriptionId, today);
