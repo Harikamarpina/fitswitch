@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getPublicGyms } from "../api/publicGymApi";
 
 export default function PublicGyms() {
   const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGyms = async () => {
@@ -28,6 +29,17 @@ export default function PublicGyms() {
       <div className="absolute top-0 right-0 w-96 h-96 bg-lime-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
       
       <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        
         <div className="text-center mb-16 space-y-4">
           <span className="inline-block px-3 py-1 rounded-full bg-lime-500/10 border border-lime-500/20 text-lime-500 text-[10px] font-bold tracking-widest uppercase">
             Discovery
@@ -101,13 +113,7 @@ export default function PublicGyms() {
             </div>
           ))}
         </div>
-
-        <div className="mt-20 text-center">
-          <Link to="/dashboard" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors inline-flex items-center gap-2 group">
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Home
-          </Link>
-        </div>
-      </div>
+</div>
     </div>
   );
 }

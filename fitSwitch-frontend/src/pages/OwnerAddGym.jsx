@@ -54,10 +54,10 @@ export default function OwnerAddGym() {
       <div className="max-w-3xl mx-auto relative z-10">
         <div className="mb-12">
           <Link
-            to="/owner/gyms"
+            to="/dashboard"
             className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors flex items-center gap-2 mb-6 group"
           >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to My Gyms
+            <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
           </Link>
           <h1 className="text-4xl font-bold tracking-tight">Register Gym</h1>
           <p className="text-zinc-400 mt-2 text-lg">
@@ -124,3 +124,4 @@ function Input({ label, ...props }) {
     </div>
   );
 }
+

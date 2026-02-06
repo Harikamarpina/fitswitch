@@ -80,7 +80,7 @@ export default function GymMap() {
     <div className="min-h-screen bg-black text-white p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <Link to={getDashboardRoute()} className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 mb-3">
+          <Link to="/dashboard" className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 mb-3">
             <span>←</span> Back to Dashboard
           </Link>
           <h1 className="text-4xl font-bold">Find Gyms Near You</h1>
@@ -195,3 +195,5 @@ export default function GymMap() {
     </div>
   );
 }
+
+

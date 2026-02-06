@@ -80,9 +80,14 @@ public class MembershipSessionService {
         Optional<GymMembershipSession> session = sessionRepository
                 .findByUserIdAndMembershipIdAndStatus(userId, membershipId, GymMembershipSession.SessionStatus.ACTIVE);
         if (session.isEmpty()) {
+            // Check if user has already checked in today
+            LocalDate today = LocalDate.now();
+            Optional<GymMembershipSession> todaySession = sessionRepository
+                    .findByMembershipIdAndVisitDateAndStatus(membershipId, today, GymMembershipSession.SessionStatus.COMPLETED);
+            
             MembershipSessionResponse response = new MembershipSessionResponse();
             response.setMembershipId(membershipId);
-            response.setStatus("NONE");
+            response.setStatus(todaySession.isPresent() ? "COMPLETED_TODAY" : "NONE");
             return response;
         }
         return mapToResponse(session.get(), "Active session");

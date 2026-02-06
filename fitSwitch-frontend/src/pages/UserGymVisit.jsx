@@ -8,10 +8,13 @@ export default function UserGymVisit() {
   const [gym, setGym] = useState(null);
   const [membership, setMembership] = useState(null);
   const [activeVisit, setActiveVisit] = useState(null);
+  const [lastVisit, setLastVisit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const storageKey = gymId ? `fitswitch:visit:${gymId}` : "";
 
   useEffect(() => {
     fetchData();
@@ -20,18 +23,18 @@ export default function UserGymVisit() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch user memberships to check if user has active membership for this gym
       const membershipsRes = await axiosInstance.get("/user/memberships");
       console.log('All memberships:', membershipsRes.data);
       console.log('Looking for gymId:', gymId);
-      
+
       const activeMembership = membershipsRes.data.find(
         m => m.gymId == gymId && m.status === "ACTIVE"
       );
-      
+
       console.log('Found membership:', activeMembership);
-      
+
       if (activeMembership) {
         setMembership(activeMembership);
         // Use gym info from membership data
@@ -43,6 +46,7 @@ export default function UserGymVisit() {
         try {
           const sessionRes = await getMembershipSession(activeMembership.id);
           const sessionData = sessionRes.data;
+          setLastVisit(sessionData || null);
           if (sessionData?.status === "ACTIVE") {
             setActiveVisit(sessionData);
           } else {
@@ -50,6 +54,7 @@ export default function UserGymVisit() {
           }
         } catch (err) {
           setActiveVisit(null);
+          setLastVisit(null);
         }
       } else {
         // Still set gym object even if no membership, so we don't show "gym not found"
@@ -60,6 +65,7 @@ export default function UserGymVisit() {
             gymId: anyMembership.gymId
           });
           setActiveVisit(null);
+          setLastVisit(null);
         } else {
           setError("No membership found for this gym");
         }
@@ -80,10 +86,11 @@ export default function UserGymVisit() {
 
     try {
       const response = await checkInToMembership(membership.id);
-      
+
       setActiveVisit(response.data);
+      setLastVisit(response.data);
       setSuccess("Successfully checked in! Enjoy your workout.");
-      
+
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to check in");
     } finally {
@@ -98,10 +105,18 @@ export default function UserGymVisit() {
 
     try {
       const response = await checkOutFromMembership(membership.id);
-      
-      setActiveVisit(response.data);
+
+      setActiveVisit(null);
+      setLastVisit(response.data);
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify({
+          completedAt: new Date().toISOString(),
+          visitDate: response.data?.visitDate || response.data?.checkInTime || new Date().toISOString(),
+          status: response.data?.status || "COMPLETED"
+        }));
+      }
       setSuccess("Successfully checked out! Great workout session.");
-      
+
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to check out");
     } finally {
@@ -116,6 +131,33 @@ export default function UserGymVisit() {
       hour12: true
     });
   };
+
+  const isSameDay = (a, b) => {
+    const da = new Date(a);
+    const db = new Date(b);
+    return da.getFullYear() === db.getFullYear()
+      && da.getMonth() === db.getMonth()
+      && da.getDate() === db.getDate();
+  };
+
+  const today = new Date();
+  const localLock = (() => {
+    if (!storageKey) return null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const hasVisitToday = (
+    (lastVisit && (
+      (lastVisit.visitDate && isSameDay(lastVisit.visitDate, today)) ||
+      (lastVisit.checkInTime && isSameDay(lastVisit.checkInTime, today))
+    )) ||
+    (localLock && localLock.visitDate && isSameDay(localLock.visitDate, today))
+  );
 
   if (loading) {
     return (
@@ -204,7 +246,7 @@ export default function UserGymVisit() {
                 </span>
               )}
             </div>
-            
+
             {membership && (
               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-800/50">
                 <div>
@@ -224,30 +266,30 @@ export default function UserGymVisit() {
         {membership && (
           <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 mb-10">
             <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">Today's Session</h3>
-            
-            {activeVisit ? (
+
+            {lastVisit ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-zinc-800/50">
                   <span className="text-zinc-400 font-medium">Current Status</span>
                   <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md ${
-                    activeVisit.status === "ACTIVE" 
+                    lastVisit.status === "ACTIVE"
                       ? "bg-lime-500 text-black shadow-lg shadow-lime-500/10"
                       : "bg-zinc-800 text-zinc-400"
                   }`}>
-                    {activeVisit.status === "ACTIVE" ? "Checked In" : "Completed"}
+                    {lastVisit.status === "ACTIVE" ? "Checked In" : "Completed"}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-black/20 rounded-2xl border border-zinc-800/50 text-center">
                     <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest block mb-1">Entry</span>
-                    <span className="text-xl font-black text-zinc-200">{formatTime(activeVisit.checkInTime)}</span>
+                    <span className="text-xl font-black text-zinc-200">{lastVisit.checkInTime ? formatTime(lastVisit.checkInTime) : "--:--"}</span>
                   </div>
-                  
+
                   <div className="p-4 bg-black/20 rounded-2xl border border-zinc-800/50 text-center">
                     <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest block mb-1">Exit</span>
                     <span className="text-xl font-black text-zinc-200">
-                      {activeVisit.checkOutTime ? formatTime(activeVisit.checkOutTime) : "--:--"}
+                      {lastVisit.checkOutTime ? formatTime(lastVisit.checkOutTime) : "--:--"}
                     </span>
                   </div>
                 </div>
@@ -275,7 +317,7 @@ export default function UserGymVisit() {
           ) : (
             <div className="grid gap-4">
               {/* Check In Button */}
-              {(!activeVisit || activeVisit.status === "COMPLETED") && (
+              {!hasVisitToday && (
                 <button
                   onClick={handleCheckIn}
                   disabled={actionLoading}
@@ -283,6 +325,12 @@ export default function UserGymVisit() {
                 >
                   {actionLoading ? "Processing..." : "Check In Now"}
                 </button>
+              )}
+
+              {hasVisitToday && (lastVisit?.status === "COMPLETED" || localLock) && (
+                <div className="text-center p-4 bg-zinc-900/30 border border-zinc-800 rounded-2xl text-zinc-500 text-sm">
+                  Today's session is already completed.
+                </div>
               )}
 
               {/* Check Out Button */}

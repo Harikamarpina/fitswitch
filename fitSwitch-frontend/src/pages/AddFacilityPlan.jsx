@@ -30,7 +30,7 @@ export default function AddFacilityPlan() {
         durationDays: Number(form.durationDays),
         price: Number(form.price),
       });
-      navigate(-1);
+      navigate(`/owner/facilities/${facilityId}/plans`);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to add facility plan");
     } finally {
@@ -44,14 +44,14 @@ export default function AddFacilityPlan() {
         {/* Header Section */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => navigate(-1)}
+            <Link
+              to={`/owner/facilities/${facilityId}/plans`}
               className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
-            </button>
+            </Link>
             <span className="text-lime-400 font-medium tracking-wider uppercase text-[10px]">Facility Management</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight">Add <span className="text-lime-400">Facility Plan</span></h1>

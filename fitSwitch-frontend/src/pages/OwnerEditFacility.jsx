@@ -85,29 +85,29 @@ export default function OwnerEditFacility() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="app-shell bg-slate-50 text-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-lime-500/30 border-t-lime-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-zinc-500 font-medium">Loading facility...</p>
+          <div className="w-10 h-10 border-4 border-sky-400/30 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-medium">Loading facility...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-6 py-12">
+    <div className="app-shell bg-slate-50 text-slate-900 px-6 py-12">
       <div className="max-w-3xl mx-auto">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="group flex items-center gap-2 text-zinc-500 hover:text-white transition-colors mb-8"
+        <Link
+          to={form.gymId ? `/owner/gym/${form.gymId}/facilities` : "/owner/gyms"}
+          className="group flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-8"
         >
           <span className="group-hover:-translate-x-1 transition-transform">←</span>
           <span className="text-sm font-medium">Go Back</span>
-        </button>
+        </Link>
 
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight">Edit Facility</h1>
-          <p className="text-zinc-400 mt-2 text-lg">Update service details and availability.</p>
+          <p className="text-slate-600 mt-2 text-lg">Update service details and availability.</p>
         </div>
 
         {error && (
@@ -119,41 +119,41 @@ export default function OwnerEditFacility() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-8 bg-zinc-900/30 border border-zinc-800 p-8 rounded-3xl"
+          className="space-y-8 surface-card p-8 rounded-3xl"
         >
           <div>
-            <label className="block text-sm font-bold text-zinc-400 mb-2 uppercase tracking-widest">Facility Name</label>
+            <label className="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-widest">Facility Name</label>
             <input
               name="facilityName"
               placeholder="e.g. Cardio Zone"
               value={form.facilityName}
               onChange={handleChange}
-              className="w-full px-5 py-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-lime-500/50 focus:border-lime-500/50 transition-all"
+              className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-500 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-zinc-400 mb-2 uppercase tracking-widest">Description</label>
+            <label className="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-widest">Description</label>
             <textarea
               name="description"
               placeholder="Describe what's available here..."
               value={form.description}
               onChange={handleChange}
               rows="5"
-              className="w-full px-5 py-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-lime-500/50 focus:border-lime-500/50 transition-all resize-none"
+              className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-500 transition-all resize-none"
             />
           </div>
 
-          <div className="flex items-center gap-3 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 w-fit">
+          <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 w-fit">
             <input
               type="checkbox"
               name="active"
               id="active"
               checked={form.active}
               onChange={handleChange}
-              className="w-5 h-5 accent-lime-500 rounded cursor-pointer"
+              className="w-5 h-5 accent-sky-600 rounded cursor-pointer"
             />
-            <label htmlFor="active" className="text-sm font-bold text-zinc-300 cursor-pointer uppercase tracking-widest">
+            <label htmlFor="active" className="text-sm font-bold text-slate-700 cursor-pointer uppercase tracking-widest">
               Facility is Active
             </label>
           </div>
@@ -161,7 +161,7 @@ export default function OwnerEditFacility() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-4 rounded-2xl bg-lime-500 text-black font-black hover:bg-lime-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-lime-500/10 mt-4"
+            className="w-full py-4 rounded-2xl bg-sky-600 text-black cta-btn font-black hover:bg-sky-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-sky-600/10 mt-4"
           >
             {saving ? "UPDATING FACILITY..." : "SAVE CHANGES"}
           </button>

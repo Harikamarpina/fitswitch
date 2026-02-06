@@ -34,7 +34,7 @@ export default function AddGymPlan() {
         durationMonths: Number(form.durationMonths),
         price: Number(form.price),
       });
-      navigate(-1);
+      navigate(`/owner/gyms/${gymId}/plans`);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to add plan");
     } finally {
@@ -177,3 +177,4 @@ function Input({ label, ...props }) {
     </div>
   );
 }
+

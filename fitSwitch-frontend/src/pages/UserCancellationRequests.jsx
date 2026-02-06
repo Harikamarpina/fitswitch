@@ -57,7 +57,7 @@ export default function UserCancellationRequests() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Link
-                to="/user/dashboard"
+                to="/dashboard"
                 className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -110,8 +110,8 @@ export default function GymDetails() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
       
       <div className="max-w-5xl mx-auto relative z-10">
-        <Link to="/gyms" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors mb-10 inline-flex items-center gap-2 group">
-          <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Network
+        <Link to="/owner/gyms" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors mb-10 inline-flex items-center gap-2 group">
+          <span className="group-hover:-translate-x-1 transition-transform">←</span> Back
         </Link>
 
         {/* Gym Header Section */}
@@ -235,7 +235,7 @@ export default function GymDetails() {
                               : "bg-lime-500 text-black hover:bg-lime-400"
                           }`}
                         >
-                          {cardLoading[facility.id] ? "Processing..." : "Use Digital Card (â‚¹100)"}
+                          {cardLoading[facility.id] ? "Processing..." : "Use Digital Card "}
                         </button>
                       </div>
                     </div>
@@ -293,3 +293,4 @@ export default function GymDetails() {
     </div>
   );
 }
+

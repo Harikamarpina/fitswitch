@@ -296,7 +296,7 @@ export default function UserDashboard() {
               <h2 className="text-2xl font-bold">Gym Memberships</h2>
               <div className="h-px flex-1 bg-zinc-800"></div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[800px] overflow-y-auto pr-2">
               {memberships.filter((m) => m.status === "ACTIVE").map((membership) => (
                 <UserSessionCard
                   key={membership.id}
@@ -316,7 +316,7 @@ export default function UserDashboard() {
               <h2 className="text-2xl font-bold">Facility Access</h2>
               <div className="h-px flex-1 bg-zinc-800"></div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[800px] overflow-y-auto pr-2">
               {facilitySubscriptions.map((subscription) => (
                 <FacilitySessionCard
                   key={subscription.id}

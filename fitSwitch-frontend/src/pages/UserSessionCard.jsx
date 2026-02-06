@@ -8,56 +8,82 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
   // Track if user has checked in today (persists after checkout)
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
 
+  const storageKey = membership?.id ? `fitswitch:membership:${membership.id}:checkin` : "";
+
   useEffect(() => {
-    // Set active session based on current session API only
     const checkActiveSession = async () => {
       console.log('Dashboard stats:', dashboardStats);
       console.log('Current session status:', dashboardStats?.currentSessionStatus);
       if (!membership?.id) return;
-      
+
+      // localStorage guard (frontend-only) for same-day completion
+      let localLock = null;
+      try {
+        const raw = storageKey ? localStorage.getItem(storageKey) : null;
+        localLock = raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        localLock = null;
+      }
+
+      const isSameDay = (a, b) => {
+        const da = new Date(a);
+        const db = new Date(b);
+        return da.getFullYear() === db.getFullYear()
+          && da.getMonth() === db.getMonth()
+          && da.getDate() === db.getDate();
+      };
+
+      if (localLock?.completedAt && isSameDay(localLock.completedAt, new Date())) {
+        setHasCheckedInToday(true);
+      }
+
       try {
         // Always check membership session API for accurate state
         const response = await getMembershipSession(membership.id);
         const sessionData = response.data;
         console.log('Current session data:', sessionData);
-        
-        // Check if there's an active session for this membership
+
         if (sessionData && sessionData.membershipId === membership.id && sessionData.status === 'ACTIVE') {
-          setActiveSession({ 
-            status: "ACTIVE", 
+          setActiveSession({
+            status: "ACTIVE",
             checkInTime: sessionData.checkInTime || new Date().toISOString()
           });
           setHasCheckedInToday(true);
           console.log('Setting active session for:', membership.gymName);
+        } else if (sessionData && sessionData.status === 'COMPLETED_TODAY') {
+          setActiveSession(null);
+          setHasCheckedInToday(true);
+          console.log('User already checked in today');
         } else {
           setActiveSession(null);
+          if (!(localLock?.completedAt && isSameDay(localLock.completedAt, new Date()))) {
+            setHasCheckedInToday(false);
+          }
           console.log('No active session for this gym');
         }
       } catch (err) {
         console.log('No current session or error:', err);
         setActiveSession(null);
       }
-      
-      // Do not use global lastVisitDate; it can belong to a different gym
     };
-    
+
     if (membership?.id) {
       checkActiveSession();
     }
-  }, [dashboardStats, membership.gymName, membership.id]);
+  }, [dashboardStats, membership.gymName, membership.id, storageKey]);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setError("");
-      
+
       const response = await checkInToMembership(membership.id);
       // Set active session immediately for UI responsiveness
-      setActiveSession({ 
-        status: "ACTIVE", 
+      setActiveSession({
+        status: "ACTIVE",
         checkInTime: new Date().toISOString()
       });
-      
+
       if (onSessionUpdate) {
         onSessionUpdate(response.data);
       }
@@ -73,22 +99,20 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
     try {
       setLoading(true);
       setError("");
-      
-      console.log('Attempting to check out...');
-      console.log('Dashboard session status:', dashboardStats?.currentSessionStatus);
-      
+
       const response = await checkOutFromMembership(membership.id);
-      console.log('Check-out response:', response);
-      
-      // Clear active session but keep track that user checked in today
       setActiveSession(null);
-      
+      setHasCheckedInToday(true);
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify({
+          completedAt: new Date().toISOString()
+        }));
+      }
+
       if (onSessionUpdate) {
         onSessionUpdate(null);
       }
     } catch (err) {
-      console.error('Check-out error:', err);
-      console.error('Error response:', err.response?.data);
       const errorMessage = err.response?.data?.message || "Check-out failed";
       setError(errorMessage);
     } finally {
@@ -199,7 +223,7 @@ export default function UserSessionCard({ membership, onSessionUpdate, dashboard
             {loading ? "Processing..." : "Finish Session"}
           </button>
         )}
-        
+
         {membership.status === "ACTIVE" && (
           <button
             onClick={() => onUnsubscribe(membership)}
