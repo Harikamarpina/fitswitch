@@ -60,7 +60,7 @@ public class UnsubscribeController {
     @PostMapping("/owner/unsubscribe-requests/{id}/approve")
     public ResponseEntity<ApiResponse> approveUnsubscribeRequest(
             @PathVariable Long id,
-            @RequestBody ApprovalRequestDto approval,
+            @Valid @RequestBody ApprovalRequestDto approval,
             HttpServletRequest request) {
         Long ownerId = jwtUtils.getUserIdFromRequest(request);
         ApiResponse response = unsubscribeService.approveUnsubscribeRequest(ownerId, id, approval);
@@ -70,7 +70,7 @@ public class UnsubscribeController {
     @PostMapping("/owner/unsubscribe-requests/{id}/reject")
     public ResponseEntity<ApiResponse> rejectUnsubscribeRequest(
             @PathVariable Long id,
-            @RequestBody ApprovalRequestDto rejection,
+            @Valid @RequestBody ApprovalRequestDto rejection,
             HttpServletRequest request) {
         Long ownerId = jwtUtils.getUserIdFromRequest(request);
         ApiResponse response = unsubscribeService.rejectUnsubscribeRequest(ownerId, id, rejection);

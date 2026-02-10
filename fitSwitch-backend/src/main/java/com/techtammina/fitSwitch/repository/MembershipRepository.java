@@ -22,6 +22,8 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
     Optional<Membership> findByUserIdAndGymIdAndStatus(Long userId, Long gymId, MembershipStatus status);
     
+    Optional<Membership> findByUserIdAndPlanIdAndStatus(Long userId, Long planId, MembershipStatus status);
+    
     List<Membership> findByUserIdAndStatus(Long userId, MembershipStatus status);
     
     List<Membership> findByUserIdAndGymId(Long userId, Long gymId);

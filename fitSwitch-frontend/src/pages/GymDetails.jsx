@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getGymDetails, getGymFacilities, getGymPlans } from "../api/publicGymApi";
 import { getGymFacilityPlans } from "../api/facilityApi";
 import { useFacility } from "../api/walletApi";
+import axiosInstance from "../api/axiosInstance";
 
 export default function GymDetails() {
   const { gymId } = useParams();
@@ -11,11 +12,14 @@ export default function GymDetails() {
   const [facilities, setFacilities] = useState([]);
   const [plans, setPlans] = useState([]);
   const [facilityPlans, setFacilityPlans] = useState([]);
+  const [activePlanIds, setActivePlanIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cardMessage, setCardMessage] = useState("");
   const [cardError, setCardError] = useState("");
   const [cardLoading, setCardLoading] = useState({});
+  const role = localStorage.getItem("role");
+  const isOwner = role === "OWNER";
 
   useEffect(() => {
     const fetchGymData = async () => {
@@ -31,6 +35,21 @@ export default function GymDetails() {
         setFacilities(facilitiesRes.data || []);
         setPlans(plansRes.data || []);
         setFacilityPlans(facilityPlansRes.data || []);
+
+        const token = localStorage.getItem("token");
+        if (token && role === "USER") {
+          try {
+            const membershipsRes = await axiosInstance.get("/user/memberships");
+            const today = new Date();
+            const activeIds = (membershipsRes.data || [])
+              .filter(m => m.status === "ACTIVE" && m.endDate && new Date(m.endDate) >= today)
+              .map(m => m.planId)
+              .filter(Boolean);
+            setActivePlanIds(activeIds);
+          } catch (err) {
+            setActivePlanIds([]);
+          }
+        }
       } catch (err) {
         setError("Failed to load gym details");
       } finally {
@@ -88,6 +107,8 @@ export default function GymDetails() {
     }
   };
 
+  const visiblePlans = plans.filter((plan) => !activePlanIds.includes(plan.id));
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -110,7 +131,7 @@ export default function GymDetails() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
       
       <div className="max-w-5xl mx-auto relative z-10">
-        <Link to="/owner/gyms" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors mb-10 inline-flex items-center gap-2 group">
+        <Link to="/gyms" className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors mb-10 inline-flex items-center gap-2 group">
           <span className="group-hover:-translate-x-1 transition-transform">←</span> Back
         </Link>
 
@@ -165,9 +186,13 @@ export default function GymDetails() {
                 <div className="p-10 rounded-3xl bg-zinc-900/20 border border-zinc-800/50 border-dashed text-center">
                   <p className="text-zinc-500 font-medium">No memberships available at this location.</p>
                 </div>
+              ) : visiblePlans.length === 0 ? (
+                <div className="p-10 rounded-3xl bg-zinc-900/20 border border-zinc-800/50 border-dashed text-center">
+                  <p className="text-zinc-500 font-medium">You already have an active membership plan here.</p>
+                </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                  {plans.map((plan) => (
+                  {visiblePlans.map((plan) => (
                     <div key={plan.id} className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 hover:border-lime-500/30 transition-all flex flex-col">
                       <h3 className="text-xl font-bold mb-3">{plan.planName}</h3>
                       <p className="text-zinc-500 text-sm leading-relaxed mb-8 flex-1">{plan.description}</p>
@@ -183,12 +208,14 @@ export default function GymDetails() {
                         </div>
                       </div>
                       
-                      <button 
-                        onClick={() => handleSelectPlan(plan)}
-                        className="w-full py-4 rounded-2xl bg-zinc-100 text-black font-bold hover:bg-white transition-all active:scale-[0.98]"
-                      >
-                        Enroll Now
-                      </button>
+                      {!isOwner && (
+                        <button 
+                          onClick={() => handleSelectPlan(plan)}
+                          className="w-full py-4 rounded-2xl bg-zinc-100 text-black font-bold hover:bg-white transition-all active:scale-[0.98]"
+                        >
+                          Enroll Now
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -225,19 +252,21 @@ export default function GymDetails() {
                         )}
                       </div>
 
-                      <div className="mt-5">
-                        <button
-                          onClick={() => handleUseCard(facility.id)}
-                          disabled={cardLoading[facility.id]}
-                          className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
-                            cardLoading[facility.id]
-                              ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                              : "bg-lime-500 text-black hover:bg-lime-400"
-                          }`}
-                        >
-                          {cardLoading[facility.id] ? "Processing..." : "Use Digital Card "}
-                        </button>
-                      </div>
+                      {!isOwner && (
+                        <div className="mt-5">
+                          <button
+                            onClick={() => handleUseCard(facility.id)}
+                            disabled={cardLoading[facility.id]}
+                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
+                              cardLoading[facility.id]
+                                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                                : "bg-lime-500 text-black hover:bg-lime-400"
+                            }`}
+                          >
+                            {cardLoading[facility.id] ? "Processing..." : "Use Digital Card "}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

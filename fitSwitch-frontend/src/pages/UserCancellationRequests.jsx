@@ -38,6 +38,15 @@ export default function UserCancellationRequests() {
     }
   };
 
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'REFUNDED':
+        return 'COMPLETED';
+      default:
+        return status;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -120,8 +129,8 @@ export default function UserCancellationRequests() {
                       </p>
                     </div>
                     <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase border ${getStatusColor(request.status)}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${request.status === 'PENDING' ? 'bg-amber-400 animate-pulse' : request.status === 'APPROVED' ? 'bg-lime-400' : 'bg-red-400'}`}></span>
-                      {request.status}
+                      <span className={`w-1.5 h-1.5 rounded-full ${request.status === 'PENDING' ? 'bg-amber-400 animate-pulse' : request.status === 'APPROVED' ? 'bg-lime-400' : request.status === 'REFUNDED' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                      {getStatusLabel(request.status)}
                     </div>
                   </div>
 
@@ -143,9 +152,19 @@ export default function UserCancellationRequests() {
                           <div className="mt-3 p-3 bg-lime-400/10 border border-lime-400/20 rounded-xl">
                             <div className="flex items-center gap-2 text-lime-400 text-xs font-medium">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Refund approved - awaiting owner processing</span>
+                            </div>
+                          </div>
+                        )}
+                        {request.status === 'REFUNDED' && request.refundAmount && (
+                          <div className="mt-3 p-3 bg-emerald-400/10 border border-emerald-400/20 rounded-xl">
+                            <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span>Refund approved and queued for processing</span>
+                              <span>Refund completed and credited to your wallet</span>
                             </div>
                           </div>
                         )}
@@ -173,14 +192,31 @@ export default function UserCancellationRequests() {
                           <div className="flex items-start gap-3">
                             <div className="w-8 h-8 bg-lime-400/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                               <svg className="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             </div>
                             <div>
                               <div className="text-sm font-medium text-lime-400 mb-1">Refund Status</div>
                               <div className="text-xs text-zinc-400 leading-relaxed">
                                 Your refund of <span className="font-bold text-lime-400">INR {request.refundAmount.toFixed(2)}</span> has been approved.
-                                Processing happens after the owner initiates the refund and may take 2-4 business days if their wallet balance is low.
+                                Waiting for owner to process the refund. This may take 2-4 business days.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {request.status === 'REFUNDED' && request.refundAmount > 0 && (
+                        <div className="mt-4 p-4 bg-gradient-to-r from-emerald-400/5 to-green-400/5 border border-emerald-400/20 rounded-2xl">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-emerald-400/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-emerald-400 mb-1">Refund Completed</div>
+                              <div className="text-xs text-zinc-400 leading-relaxed">
+                                Your refund of <span className="font-bold text-emerald-400">INR {request.refundAmount.toFixed(2)}</span> has been successfully credited to your wallet.
                               </div>
                             </div>
                           </div>

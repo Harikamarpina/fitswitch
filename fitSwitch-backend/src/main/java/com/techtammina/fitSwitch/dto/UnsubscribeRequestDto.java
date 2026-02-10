@@ -1,10 +1,12 @@
 package com.techtammina.fitSwitch.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public class UnsubscribeRequestDto {
     
     @NotNull(message = "Membership ID is required")
+    @Positive(message = "Membership ID must be a positive number")
     private Long membershipId;
     
     private String reason;

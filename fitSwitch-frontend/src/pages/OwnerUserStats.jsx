@@ -46,10 +46,10 @@ export default function OwnerUserStats() {
 
   if (loading) {
     return (
-      <div className="app-shell bg-slate-50 text-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-sky-400/30 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 font-medium">Fetching member profile...</p>
+          <div className="w-12 h-12 border-4 border-lime-400/30 border-t-lime-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-zinc-500 font-medium">Fetching member profile...</p>
         </div>
       </div>
     );
@@ -57,15 +57,17 @@ export default function OwnerUserStats() {
 
   if (error || !userStats) {
     return (
-      <div className="app-shell bg-slate-50 text-slate-900 px-6 py-12">
+      <div className="min-h-screen bg-black text-white px-6 py-12">
         <div className="max-w-3xl mx-auto">
           <Link
             to={`/owner/gyms/${gymId}/users`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors mb-6"
+            className="inline-flex items-center gap-2 p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white mb-6"
           >
-            <span>←</span> Back to Members
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
           </Link>
-          <div className="text-center p-8 surface-card rounded-3xl">
+          <div className="text-center p-8 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl">
             <p className="text-red-400 mb-6 font-medium">{error || "Member not found"}</p>
           </div>
         </div>
@@ -74,55 +76,58 @@ export default function OwnerUserStats() {
   }
 
   return (
-    <div className="app-shell bg-slate-50 text-slate-900 px-6 py-12">
-      <div className="app-container">
-        <Link
-          to={`/owner/gyms/${gymId}/users`}
-          className="group flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors mb-8"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform">←</span>
-          <span className="text-sm font-medium">Back to Members</span>
-        </Link>
+    <div className="min-h-screen bg-black text-white px-6 py-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <Link
+            to={`/owner/gyms/${gymId}/users`}
+            className="inline-flex items-center gap-2 p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+        </div>
 
         {/* User Profile Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-sky-600/10 rounded-3xl flex items-center justify-center text-sky-600 font-black text-4xl border border-sky-200">
+            <div className="w-24 h-24 bg-lime-500/10 rounded-3xl flex items-center justify-center text-lime-400 font-black text-4xl border border-lime-500/20">
               {userStats.userName?.charAt(0)}
             </div>
             <div>
               <h2 className="text-5xl font-black tracking-tighter mb-2">{userStats.userName}</h2>
-              <p className="text-slate-500 font-medium text-lg">{userStats.email}</p>
+              <p className="text-zinc-500 font-medium text-lg">{userStats.email}</p>
             </div>
           </div>
-          <div className="surface-card px-8 py-4 rounded-3xl text-center">
-            <div className="text-4xl font-black text-sky-600 leading-none">{userStats.totalVisitCount}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mt-2">Life-time Visits</div>
+          <div className="bg-zinc-900/40 border border-zinc-800 px-8 py-4 rounded-3xl text-center">
+            <div className="text-4xl font-black text-lime-400 leading-none">{userStats.totalVisitCount}</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mt-2">Life-time Visits</div>
           </div>
         </div>
 
         {/* Quick Activity Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="surface-card rounded-3xl p-8 group hover:bg-white transition-colors">
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 hover:bg-zinc-900/60 transition-colors">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 text-xl">
                 🔑
               </div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-600">Recent Check-in</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Recent Check-in</h3>
             </div>
-            <p className="text-2xl font-bold text-slate-900 leading-tight">
+            <p className="text-2xl font-bold text-white leading-tight">
               {formatDateTime(userStats.lastCheckIn)}
             </p>
           </div>
 
-          <div className="surface-card rounded-3xl p-8 group hover:bg-white transition-colors">
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-8 hover:bg-zinc-900/60 transition-colors">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 text-xl">
                 🚪
               </div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-600">Recent Check-out</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Recent Check-out</h3>
             </div>
-            <p className="text-2xl font-bold text-slate-900 leading-tight">
+            <p className="text-2xl font-bold text-white leading-tight">
               {formatDateTime(userStats.lastCheckOut)}
             </p>
           </div>
@@ -137,47 +142,47 @@ export default function OwnerUserStats() {
           {userStats.sessionHistory && userStats.sessionHistory.length > 0 ? (
             <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
               {userStats.sessionHistory.map((session) => (
-                <div key={`${session.planType}-${session.id}`} className="surface-card rounded-3xl p-6">
+                <div key={`${session.planType}-${session.id}`} className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                      <div className="text-sm font-bold text-slate-900">
+                      <div className="text-sm font-bold text-white">
                         {session.planType === "FACILITY" ? "Facility Session" : "Gym Session"}
                       </div>
-                      <div className="text-xs text-slate-500">{session.gymName}</div>
+                      <div className="text-xs text-zinc-500">{session.gymName}</div>
                     </div>
                     <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                       session.planType === "FACILITY"
-                        ? "bg-sky-600/10 text-purple-400"
-                        : "bg-sky-600/10 text-sky-600"
+                        ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                        : "bg-lime-500/10 text-lime-400 border border-lime-500/20"
                     }`}>
                       {session.planType}
                     </span>
                   </div>
 
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    <div className="bg-slate-100 rounded-xl p-3">
-                      <div className="text-[10px] uppercase font-bold text-slate-500">Visit Date</div>
-                      <div className="text-slate-700 font-semibold">{formatDate(session.visitDate)}</div>
+                    <div className="bg-zinc-800/50 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Visit Date</div>
+                      <div className="text-zinc-300 font-semibold">{formatDate(session.visitDate)}</div>
                     </div>
-                    <div className="bg-slate-100 rounded-xl p-3">
-                      <div className="text-[10px] uppercase font-bold text-slate-500">Check-in</div>
-                      <div className="text-slate-700 font-semibold">{formatDateTime(session.checkInTime)}</div>
+                    <div className="bg-zinc-800/50 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-in</div>
+                      <div className="text-zinc-300 font-semibold">{formatDateTime(session.checkInTime)}</div>
                     </div>
-                    <div className="bg-slate-100 rounded-xl p-3">
-                      <div className="text-[10px] uppercase font-bold text-slate-500">Check-out</div>
-                      <div className="text-slate-700 font-semibold">{formatDateTime(session.checkOutTime)}</div>
+                    <div className="bg-zinc-800/50 rounded-xl p-3">
+                      <div className="text-[10px] uppercase font-bold text-zinc-500">Check-out</div>
+                      <div className="text-zinc-300 font-semibold">{formatDateTime(session.checkOutTime)}</div>
                     </div>
                   </div>
 
-                  <div className="mt-3 text-[10px] uppercase font-bold text-slate-500">
-                    Status: <span className="text-slate-700">{session.status}</span>
+                  <div className="mt-3 text-[10px] uppercase font-bold text-zinc-500">
+                    Status: <span className="text-zinc-300">{session.status}</span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="surface-card border-dashed rounded-3xl p-10 text-center">
-              <p className="text-slate-500 font-medium">No sessions found....</p>
+            <div className="bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl p-10 text-center">
+              <p className="text-zinc-500 font-medium">No sessions found....</p>
             </div>
           )}
         </div>
@@ -192,31 +197,31 @@ export default function OwnerUserStats() {
             {userStats.memberships && userStats.memberships.length > 0 ? (
               <div className="space-y-4">
                 {userStats.memberships.map((membership, index) => (
-                  <div key={index} className="surface-card rounded-3xl p-6 relative overflow-hidden group">
+                  <div key={index} className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6 relative overflow-hidden hover:bg-zinc-900/60 transition-colors">
                     <div className={`absolute top-0 right-0 px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-bl-xl ${
-                      membership.status === "ACTIVE" ? "bg-sky-600 text-black cta-btn" : "bg-slate-100 text-slate-500"
+                      membership.status === "ACTIVE" ? "bg-lime-400 text-black" : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {membership.status}
                     </div>
-                    <h4 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-sky-600 transition-colors">
+                    <h4 className="text-xl font-bold text-white mb-4 hover:text-lime-400 transition-colors">
                       {membership.planName}
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Purchased</div>
-                        <div className="text-sm font-bold text-slate-700">{formatDate(membership.purchaseDate)}</div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Purchased</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(membership.purchaseDate)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expires</div>
-                        <div className="text-sm font-bold text-slate-700">{formatDate(membership.expiryDate)}</div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Expires</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(membership.expiryDate)}</div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="surface-card border-dashed rounded-3xl p-10 text-center">
-                <p className="text-slate-500 font-medium">No gym memberships found</p>
+              <div className="bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl p-10 text-center">
+                <p className="text-zinc-500 font-medium">No gym memberships found</p>
               </div>
             )}
           </section>
@@ -230,34 +235,34 @@ export default function OwnerUserStats() {
             {userStats.facilitySubscriptions && userStats.facilitySubscriptions.length > 0 ? (
               <div className="space-y-4">
                 {userStats.facilitySubscriptions.map((subscription, index) => (
-                  <div key={index} className="surface-card rounded-3xl p-6 relative overflow-hidden group">
+                  <div key={index} className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-6 relative overflow-hidden hover:bg-zinc-900/60 transition-colors">
                     <div className={`absolute top-0 right-0 px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-bl-xl ${
-                      subscription.status === "ACTIVE" ? "bg-sky-600 text-white cta-btn" : "bg-slate-100 text-slate-500"
+                      subscription.status === "ACTIVE" ? "bg-purple-500 text-white" : "bg-zinc-800 text-zinc-500"
                     }`}>
                       {subscription.status}
                     </div>
                     <div className="mb-4">
-                      <h4 className="text-xl font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                      <h4 className="text-xl font-bold text-white hover:text-purple-400 transition-colors">
                         {subscription.facilityName}
                       </h4>
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter">{subscription.planName}</p>
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">{subscription.planName}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Purchased</div>
-                        <div className="text-sm font-bold text-slate-700">{formatDate(subscription.purchaseDate)}</div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Purchased</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(subscription.purchaseDate)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expires</div>
-                        <div className="text-sm font-bold text-slate-700">{formatDate(subscription.expiryDate)}</div>
+                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Expires</div>
+                        <div className="text-sm font-bold text-zinc-300">{formatDate(subscription.expiryDate)}</div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="surface-card border-dashed rounded-3xl p-10 text-center">
-                <p className="text-slate-500 font-medium">No facility passes found</p>
+              <div className="bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl p-10 text-center">
+                <p className="text-zinc-500 font-medium">No facility passes found</p>
               </div>
             )}
           </section>

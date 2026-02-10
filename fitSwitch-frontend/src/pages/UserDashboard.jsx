@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { getUserDashboardStats } from "../api/statsApi";
 import { getUserUnsubscribeRequests } from "../api/unsubscribeApi";
@@ -10,6 +10,7 @@ import UnsubscribeModal from "../components/UnsubscribeModal";
 import CancellationNotificationCard from "../components/CancellationNotificationCard";
 
 export default function UserDashboard() {
+  const navigate = useNavigate();
   const [memberships, setMemberships] = useState([]);
   const [facilitySubscriptions, setFacilitySubscriptions] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
@@ -19,7 +20,10 @@ export default function UserDashboard() {
   const [activeSessions, setActiveSessions] = useState({});
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  const [dismissedNotifications, setDismissedNotifications] = useState(new Set());
+  const [dismissedNotifications, setDismissedNotifications] = useState(() => {
+    const saved = localStorage.getItem('dismissedNotifications');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,12 +32,12 @@ export default function UserDashboard() {
           axiosInstance.get("/user/memberships"),
           axiosInstance.get("/user/facility/subscriptions"),
           getUserDashboardStats(),
-          getUserUnsubscribeRequests().catch(() => ({ data: [] })) // Handle gracefully if API doesn't exist yet
+          getUserUnsubscribeRequests().catch(() => []) // Handle gracefully if API doesn't exist yet
         ]);
         setMemberships(membershipsRes.data || []);
         setFacilitySubscriptions(facilityRes.data || []);
         setDashboardStats(statsRes.data);
-        setCancellationRequests(cancellationRes.data || []);
+        setCancellationRequests(cancellationRes || []);
       } catch (err) {
         setError("Failed to load dashboard data");
       } finally {
@@ -52,7 +56,11 @@ export default function UserDashboard() {
   };
 
   const handleDismissNotification = (requestId) => {
-    setDismissedNotifications(prev => new Set([...prev, requestId]));
+    setDismissedNotifications(prev => {
+      const updated = new Set([...prev, requestId]);
+      localStorage.setItem('dismissedNotifications', JSON.stringify([...updated]));
+      return updated;
+    });
   };
 
   // Filter out pending requests and dismissed notifications
@@ -74,6 +82,16 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-bold tracking-tight">My Dashboard</h1>

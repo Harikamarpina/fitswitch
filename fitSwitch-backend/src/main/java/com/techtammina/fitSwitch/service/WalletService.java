@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -80,7 +82,7 @@ public class WalletService {
     public ApiResponse useFacility(Long userId, FacilityUsageRequest request) {
         // Get user wallet
         UserWallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+                .orElseThrow(() -> new RuntimeException("Please add money to your wallet to use digital card"));
 
         // Get gym and facility details
         Gym gym = gymRepository.findById(request.getGymId())
@@ -103,11 +105,11 @@ public class WalletService {
         }
 
         // Calculate facility usage cost (assuming 10% of monthly plan cost for single use)
-        BigDecimal usageCost = calculateFacilityUsageCost(request.getGymId());
+        BigDecimal usageCost = calculateFacilityUsageCost(request.getFacilityId());
 
         // Check wallet balance
         if (wallet.getBalance().compareTo(usageCost) < 0) {
-            throw new RuntimeException("Insufficient wallet balance");
+            throw new RuntimeException("Please add money to your wallet to use digital card");
         }
 
         // Debit wallet
@@ -193,10 +195,23 @@ public class WalletService {
                 });
     }
 
-    private BigDecimal calculateFacilityUsageCost(Long gymId) {
-        // Simple logic: fixed cost of 100 per facility usage
-        // In real implementation, this could be configurable per facility
-        return new BigDecimal("100.00");
+    private BigDecimal calculateFacilityUsageCost(Long facilityId) {
+        List<FacilityPlan> activePlans = facilityPlanRepository.findByFacilityIdAndActiveTrue(facilityId);
+        if (activePlans.isEmpty()) {
+            return new BigDecimal("100.00");
+        }
+
+        for (FacilityPlan plan : activePlans) {
+            if (plan.getPlanName() != null && plan.getPlanName().equalsIgnoreCase("Pay Per Use")) {
+                return plan.getPrice();
+            }
+        }
+
+        return activePlans.stream()
+                .filter(plan -> plan.getDurationDays() != null && plan.getDurationDays() > 0 && plan.getPrice() != null)
+                .map(plan -> plan.getPrice().divide(BigDecimal.valueOf(plan.getDurationDays()), 2, RoundingMode.HALF_UP))
+                .min(Comparator.naturalOrder())
+                .orElse(new BigDecimal("100.00"));
     }
 
     public List<WalletTransactionResponse> getTransactionHistory(Long userId) {

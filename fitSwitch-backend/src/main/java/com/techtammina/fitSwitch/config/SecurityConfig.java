@@ -46,7 +46,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/register", "/auth/verify-otp", "/auth/login", "/auth/resend-otp").permitAll()
+                .requestMatchers("/gyms/**").permitAll()
+                .requestMatchers("/owner/**", "/api/owner/**").hasRole("OWNER")
+                .requestMatchers("/user/**", "/api/user/**").hasRole("USER")
+                .requestMatchers("/api/wallet/**").hasAnyRole("OWNER", "USER")
+                .requestMatchers("/api/digital-card/**").hasRole("USER")
+                .requestMatchers("/api/membership/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

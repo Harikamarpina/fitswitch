@@ -74,10 +74,34 @@ public class MembershipService {
             throw new RuntimeException("Insufficient wallet balance. Please add money to your wallet to subscribe");
         }
 
+        LocalDate today = LocalDate.now();
+
+        // Check if user already has active membership for this plan
+        membershipRepository.findByUserIdAndPlanIdAndStatus(userId, request.getPlanId(), MembershipStatus.ACTIVE)
+                .ifPresent(existing -> {
+                    if (!existing.getEndDate().isBefore(today)) {
+                        throw new RuntimeException("Membership plan is already active");
+                    } else {
+                        existing.setStatus(MembershipStatus.EXPIRED);
+                        membershipRepository.save(existing);
+                    }
+                });
+
         // Check if user already has active membership for this gym
         membershipRepository.findByUserIdAndGymIdAndStatus(userId, request.getGymId(), MembershipStatus.ACTIVE)
                 .ifPresent(existing -> {
-                    throw new RuntimeException("Active membership already exists for this gym");
+                    if (!existing.getEndDate().isBefore(today)) {
+                        throw new RuntimeException("Active membership already exists for this gym");
+                    } else {
+                        existing.setStatus(MembershipStatus.EXPIRED);
+                        membershipRepository.save(existing);
+                    }
+                });
+
+        // Check if user already has this specific plan active
+        membershipRepository.findByUserIdAndPlanIdAndStatus(userId, request.getPlanId(), MembershipStatus.ACTIVE)
+                .ifPresent(existing -> {
+                    throw new RuntimeException("Plan already exists");
                 });
 
         // Deduct money from wallet
@@ -190,6 +214,8 @@ public class MembershipService {
     private UserMembershipResponse mapToUserResponse(Membership membership, Gym gym, GymPlan plan) {
         UserMembershipResponse response = new UserMembershipResponse();
         response.setId(membership.getId());
+        response.setGymId(membership.getGymId());
+        response.setPlanId(membership.getPlanId());
         response.setGymName(gym != null ? gym.getGymName() : "Unknown Gym");
         response.setPlanName(plan != null ? plan.getPlanName() : "Unknown Plan");
         response.setStartDate(membership.getStartDate());

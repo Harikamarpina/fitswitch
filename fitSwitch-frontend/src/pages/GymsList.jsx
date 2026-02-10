@@ -30,7 +30,7 @@ export default function GymsList() {
               to="/user/dashboard"
               className="text-base font-bold text-zinc-400 hover:text-lime-500 transition-colors flex items-center gap-2 group mb-4"
             >
-              <span className="group-hover:-translate-x-1 transition-transform">â†</span> Back to Dashboard
+              <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
             </Link>
             <h1 className="text-4xl font-bold tracking-tight">Browse Gyms</h1>
             <p className="text-zinc-400 mt-2 text-lg">

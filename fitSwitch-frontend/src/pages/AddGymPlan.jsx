@@ -81,8 +81,9 @@ export default function AddGymPlan() {
               name="planName" 
               placeholder="e.g. Platinum Annual Membership"
               value={form.planName} 
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
+              maxLength={80}
             />
 
             <div className="space-y-2">
@@ -92,6 +93,7 @@ export default function AddGymPlan() {
                 value={form.description}
                 onChange={handleChange}
                 placeholder="Describe the benefits and access levels of this plan..."
+                maxLength={300}
                 className="w-full px-6 py-4 rounded-2xl bg-black border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400/50 transition-colors resize-none"
                 rows={4}
               />
@@ -104,8 +106,9 @@ export default function AddGymPlan() {
                 type="number" 
                 placeholder="30, 90, 365"
                 value={form.durationDays} 
-                onChange={handleChange} 
-                required 
+                onChange={handleChange}
+                min="1"
+                required
               />
               <Input 
                 label="DURATION (MONTHS)" 
@@ -113,8 +116,9 @@ export default function AddGymPlan() {
                 type="number" 
                 placeholder="1, 3, 12"
                 value={form.durationMonths} 
-                onChange={handleChange} 
-                required 
+                onChange={handleChange}
+                min="1"
+                required
               />
             </div>
 
@@ -125,8 +129,10 @@ export default function AddGymPlan() {
                 type="number" 
                 placeholder="0.00"
                 value={form.price} 
-                onChange={handleChange} 
-                required 
+                onChange={handleChange}
+                min="1"
+                step="0.01"
+                required
               />
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest ml-1">PASS TYPE</label>

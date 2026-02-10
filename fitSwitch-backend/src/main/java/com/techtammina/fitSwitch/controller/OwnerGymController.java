@@ -38,7 +38,7 @@ public class OwnerGymController {
 
      @PutMapping("/{gymId}")
     public GymResponse updateGym(@PathVariable Long gymId,
-                                 @RequestBody GymUpdateRequest request,
+                                 @Valid @RequestBody GymUpdateRequest request,
                                  Authentication auth) {
         String email = auth.getName();
         User user = userRepository.findByEmail(email)

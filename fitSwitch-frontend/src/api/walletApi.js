@@ -43,16 +43,6 @@ export const getTransactionHistory = async () => {
   }
 };
 
-// Digital card check-in
-export const digitalCardCheckIn = async (gymId, facilityId) => {
-  try {
-    const response = await axiosInstance.post(`/digital-card/checkin?gymId=${gymId}&facilityId=${facilityId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
-
 // Switch membership
 export const switchMembership = async (currentMembershipId, newGymId, newPlanId) => {
   try {

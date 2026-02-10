@@ -1,7 +1,10 @@
 package com.techtammina.fitSwitch.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class ApprovalRequestDto {
     
+    @Size(max = 300, message = "Notes must be at most 300 characters")
     private String ownerNotes;
 
     // Constructors

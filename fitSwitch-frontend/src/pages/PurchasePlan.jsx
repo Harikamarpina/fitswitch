@@ -179,7 +179,7 @@ export default function PurchasePlan() {
               <div className="flex justify-between items-center pt-6 border-t border-zinc-800/50">
                 <div className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Wallet Balance</div>
                 <div className="text-lg font-bold text-white">
-                  {walletLoading ? "Loading..." : `â‚¹${walletBalance?.toFixed?.(0) ?? "0"}`}
+                  {walletLoading ? "Loading..." : `₹${walletBalance?.toFixed?.(0) ?? "0"}`}
                 </div>
               </div>
               
@@ -199,7 +199,7 @@ export default function PurchasePlan() {
                       onClick={() => setShowAddMoney(true)}
                       className="text-lime-400 font-bold hover:text-lime-300"
                     >
-                      Top up wallet â†’
+                      Top up wallet →
                     </button>
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export default function PurchasePlan() {
                     Amount (INR)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">â‚¹</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">₹</span>
                     <input
                       type="number"
                       step="0.01"

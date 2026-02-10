@@ -39,7 +39,7 @@ public class OwnerGymPlanController {
 
     @PutMapping("/{planId}")
     public GymPlanResponse updatePlan(@PathVariable Long planId,
-                                      @RequestBody GymPlanUpdateRequest request,
+                                      @Valid @RequestBody GymPlanUpdateRequest request,
                                       Authentication auth) {
         return planService.updatePlan(getOwnerId(auth), planId, request);
     }

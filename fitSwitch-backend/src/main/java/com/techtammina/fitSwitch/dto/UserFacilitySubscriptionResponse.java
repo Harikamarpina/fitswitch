@@ -7,6 +7,9 @@ import java.time.LocalDate;
 public class UserFacilitySubscriptionResponse {
 
     private Long id;
+    private Long gymId;
+    private Long facilityId;
+    private Long facilityPlanId;
     private String gymName;
     private String facilityName;
     private String planName;
@@ -26,6 +29,30 @@ public class UserFacilitySubscriptionResponse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getGymId() {
+        return gymId;
+    }
+
+    public void setGymId(Long gymId) {
+        this.gymId = gymId;
+    }
+
+    public Long getFacilityId() {
+        return facilityId;
+    }
+
+    public void setFacilityId(Long facilityId) {
+        this.facilityId = facilityId;
+    }
+
+    public Long getFacilityPlanId() {
+        return facilityPlanId;
+    }
+
+    public void setFacilityPlanId(Long facilityPlanId) {
+        this.facilityPlanId = facilityPlanId;
     }
 
     public String getGymName() {

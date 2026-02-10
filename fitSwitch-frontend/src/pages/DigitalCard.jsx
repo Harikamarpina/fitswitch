@@ -323,7 +323,7 @@ export default function DigitalCard() {
                   disabled={useCardLoading}
                   className="w-full py-3.5 rounded-2xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  {useCardLoading ? "Processing..." : "Confirm Pay-Per-Use (â‚¹100)"}
+                  {useCardLoading ? "Processing..." : "Confirm Pay-Per-Use (₹100)"}
                 </button>
             </form>
           </div>

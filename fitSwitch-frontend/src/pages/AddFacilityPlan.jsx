@@ -77,8 +77,9 @@ export default function AddFacilityPlan() {
               name="planName" 
               placeholder="e.g. Premium Yoga Monthly"
               value={form.planName} 
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
+              maxLength={80}
             />
 
             <div className="space-y-2">
@@ -88,6 +89,7 @@ export default function AddFacilityPlan() {
                 value={form.description}
                 onChange={handleChange}
                 placeholder="What services or equipment does this plan cover?"
+                maxLength={300}
                 className="w-full px-6 py-4 rounded-2xl bg-black border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400/50 transition-colors resize-none"
                 rows={4}
               />
@@ -100,8 +102,9 @@ export default function AddFacilityPlan() {
                 type="number" 
                 placeholder="30"
                 value={form.durationDays} 
-                onChange={handleChange} 
-                required 
+                onChange={handleChange}
+                min="1"
+                required
               />
               <Input 
                 label="PRICE (₹)" 
@@ -109,8 +112,10 @@ export default function AddFacilityPlan() {
                 type="number" 
                 placeholder="0.00"
                 value={form.price} 
-                onChange={handleChange} 
-                required 
+                onChange={handleChange}
+                min="1"
+                step="0.01"
+                required
               />
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getWalletBalance, addMoney, getTransactionHistory } from "../api/walletApi";
 import { getDashboardRoute } from "../utils/navigation";
@@ -75,6 +75,8 @@ export default function Wallet() {
         return 'text-red-400';
       case 'MEMBERSHIP_SWITCH':
         return 'text-orange-400';
+      case 'OWNER_REFUND':
+        return 'text-red-400';
       default:
         return 'text-zinc-300';
     }
@@ -83,17 +85,19 @@ export default function Wallet() {
   const getTransactionIcon = (type) => {
     switch (type) {
       case 'ADD_MONEY':
-        return '💰';
+        return '';
       case 'FACILITY_USAGE':
-        return '🏋️';
+        return '';
       case 'SUB':
-        return '📋';
+        return '';
       case 'MEMBERSHIP_REFUND':
-        return '↩️';
+        return '';
       case 'MEMBERSHIP_SWITCH':
-        return '🔄';
+        return '';
+      case 'OWNER_REFUND':
+        return '📉';
       default:
-        return '💳';
+        return '';
     }
   };
 
@@ -143,11 +147,11 @@ export default function Wallet() {
 
         {/* Wallet Balance Card */}
         <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-10 mb-12 backdrop-blur-md relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 text-7xl opacity-10 group-hover:scale-110 transition-transform duration-500">💳</div>
+          <div className="absolute top-0 right-0 p-8 text-7xl opacity-10 group-hover:scale-110 transition-transform duration-500">ðŸ’³</div>
           <div className="relative z-10">
             <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">Available Funds</h2>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-zinc-400">₹</span>
+              <span className="text-3xl font-bold text-zinc-400"></span>
               <span className={`text-6xl font-black tracking-tighter ${
                 wallet?.balance < 0 ? 'text-red-400' : 'text-lime-500'
               }`}>
@@ -194,7 +198,7 @@ export default function Wallet() {
                     Amount (INR)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">₹</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold"></span>
                     <input
                       type="number"
                       step="0.01"
@@ -242,7 +246,7 @@ export default function Wallet() {
           
           {transactions.length === 0 ? (
             <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-3xl">
-              <div className="text-4xl mb-4 opacity-20">📜</div>
+              <div className="text-4xl mb-4 opacity-20"></div>
               <p className="text-zinc-500 font-medium">No transactions found in your history.</p>
             </div>
           ) : (
@@ -264,16 +268,16 @@ export default function Wallet() {
                         {new Date(transaction.createdAt).toLocaleString("en-IN", {
                           day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
                         })}
-                        {transaction.gymName && ` • ${transaction.gymName}`}
+                        {transaction.gymName && `  ${transaction.gymName}`}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className={`text-lg font-black tracking-tight ${getTransactionTypeColor(transaction.type, transaction.amount)}`}>
-                      {transaction.amount >= 0 ? '+' : ''}₹{Math.abs(transaction.amount).toFixed(0)}
+                      {transaction.amount >= 0 ? '+' : ''}{Math.abs(transaction.amount).toFixed(0)}
                     </div>
                     <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">
-                      Bal: ₹{transaction.balanceAfter.toFixed(0)}
+                      Bal: {transaction.balanceAfter.toFixed(0)}
                     </div>
                   </div>
                 </div>
@@ -287,3 +291,4 @@ export default function Wallet() {
     </div>
   );
 }
+

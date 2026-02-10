@@ -84,6 +84,8 @@ export default function OwnerAddFacility() {
                 value={form.facilityName}
                 onChange={handleChange}
                 placeholder="Ex: Cardio, Yoga, CrossFit"
+                required
+                maxLength={80}
                 className="w-full px-6 h-14 rounded-2xl bg-black border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400/50 transition-colors"
               />
             </div>
@@ -95,6 +97,7 @@ export default function OwnerAddFacility() {
                 value={form.description}
                 onChange={handleChange}
                 placeholder="What equipment and amenities are available in this zone?"
+                maxLength={300}
                 className="w-full px-6 py-4 rounded-2xl bg-black border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400/50 transition-colors resize-none"
                 rows={5}
               />

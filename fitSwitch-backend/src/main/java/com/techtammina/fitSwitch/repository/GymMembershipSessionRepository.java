@@ -26,6 +26,9 @@ public interface GymMembershipSessionRepository extends JpaRepository<GymMembers
     @Query("SELECT COUNT(DISTINCT g.visitDate) FROM GymMembershipSession g WHERE g.userId = :userId AND g.status = 'COMPLETED'")
     int countCompletedVisitDaysByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT COUNT(DISTINCT g.visitDate) FROM GymMembershipSession g WHERE g.membershipId = :membershipId AND g.status = 'COMPLETED'")
+    int countCompletedVisitDaysByMembershipId(@Param("membershipId") Long membershipId);
+
     @Query("SELECT MAX(g.visitDate) FROM GymMembershipSession g WHERE g.userId = :userId AND g.status = 'COMPLETED'")
     Optional<LocalDate> findLastVisitDateByUserId(@Param("userId") Long userId);
 

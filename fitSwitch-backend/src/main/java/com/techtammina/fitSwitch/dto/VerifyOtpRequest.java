@@ -2,6 +2,7 @@ package com.techtammina.fitSwitch.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public class VerifyOtpRequest {
     @NotBlank(message = "Email is required")
@@ -9,6 +10,7 @@ public class VerifyOtpRequest {
     private String email;
 
     @NotBlank(message = "OTP is required")
+    @Pattern(regexp = "^\\d{6}$", message = "OTP must be a 6-digit number")
     private String otp;
 
     // Getters and Setters

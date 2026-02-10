@@ -21,19 +21,22 @@ public class UserFacilitySubscriptionService {
     private final GymRepository gymRepository;
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
+    private final OwnerEarningRepository ownerEarningRepository;
 
     public UserFacilitySubscriptionService(UserFacilitySubscriptionRepository subscriptionRepository,
                                           FacilityPlanRepository facilityPlanRepository,
                                           GymFacilityRepository gymFacilityRepository,
                                           GymRepository gymRepository,
                                           UserWalletRepository walletRepository,
-                                          WalletTransactionRepository transactionRepository) {
+                                          WalletTransactionRepository transactionRepository,
+                                          OwnerEarningRepository ownerEarningRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.facilityPlanRepository = facilityPlanRepository;
         this.gymFacilityRepository = gymFacilityRepository;
         this.gymRepository = gymRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.ownerEarningRepository = ownerEarningRepository;
     }
 
     @Transactional
@@ -54,11 +57,30 @@ public class UserFacilitySubscriptionService {
             throw new RuntimeException("Insufficient wallet balance. Please add money to your wallet to subscribe");
         }
 
+        LocalDate today = LocalDate.now();
+
+        // Check if user already has active subscription for this plan
+        subscriptionRepository.findByUserIdAndFacilityPlanIdAndStatus(
+                userId, plan.getId(), FacilitySubscriptionStatus.ACTIVE)
+                .ifPresent(existing -> {
+                    if (!existing.getEndDate().isBefore(today)) {
+                        throw new RuntimeException("Facility plan is already active");
+                    } else {
+                        existing.setStatus(FacilitySubscriptionStatus.EXPIRED);
+                        subscriptionRepository.save(existing);
+                    }
+                });
+
         // Check if user already has active subscription for this facility
         subscriptionRepository.findByUserIdAndFacilityIdAndStatus(
                 userId, plan.getFacilityId(), FacilitySubscriptionStatus.ACTIVE)
                 .ifPresent(existing -> {
-                    throw new RuntimeException("Active facility subscription already exists");
+                    if (!existing.getEndDate().isBefore(today)) {
+                        throw new RuntimeException("Active facility subscription already exists");
+                    } else {
+                        existing.setStatus(FacilitySubscriptionStatus.EXPIRED);
+                        subscriptionRepository.save(existing);
+                    }
                 });
 
         // Deduct money from wallet
@@ -85,8 +107,8 @@ public class UserFacilitySubscriptionService {
         subscription.setGymId(plan.getGymId());
         subscription.setFacilityId(plan.getFacilityId());
         subscription.setFacilityPlanId(plan.getId());
-        subscription.setStartDate(LocalDate.now());
-        subscription.setEndDate(LocalDate.now().plusDays(plan.getDurationDays()));
+        subscription.setStartDate(today);
+        subscription.setEndDate(today.plusDays(plan.getDurationDays()));
         subscription.setStatus(FacilitySubscriptionStatus.ACTIVE);
         subscription.setCreatedAt(LocalDateTime.now());
 
@@ -111,6 +133,17 @@ public class UserFacilitySubscriptionService {
             ownerWalletTxn.setFacilityId(plan.getFacilityId());
             ownerWalletTxn.setCreatedAt(LocalDateTime.now());
             transactionRepository.save(ownerWalletTxn);
+
+            OwnerEarning earning = new OwnerEarning();
+            earning.setOwnerId(gymForOwner.getOwnerId());
+            earning.setGymId(plan.getGymId());
+            earning.setUserId(userId);
+            earning.setFacilityId(plan.getFacilityId());
+            earning.setType(OwnerEarning.EarningType.FACILITY_PURCHASE);
+            earning.setAmount(plan.getPrice());
+            earning.setDescription("Facility plan purchase");
+            earning.setCreatedAt(LocalDateTime.now());
+            ownerEarningRepository.save(earning);
         }
 
         // Get related entities for response
@@ -147,6 +180,9 @@ public class UserFacilitySubscriptionService {
                                                           Gym gym, GymFacility facility, FacilityPlan plan) {
         UserFacilitySubscriptionResponse response = new UserFacilitySubscriptionResponse();
         response.setId(subscription.getId());
+        response.setGymId(subscription.getGymId());
+        response.setFacilityId(subscription.getFacilityId());
+        response.setFacilityPlanId(subscription.getFacilityPlanId());
         response.setGymName(gym != null ? gym.getGymName() : "Unknown Gym");
         response.setFacilityName(facility != null ? facility.getFacilityName() : "Unknown Facility");
         response.setPlanName(plan != null ? plan.getPlanName() : "Unknown Plan");

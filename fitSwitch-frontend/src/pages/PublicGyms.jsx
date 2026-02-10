@@ -31,7 +31,7 @@ export default function PublicGyms() {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/owner/gyms')}
             className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

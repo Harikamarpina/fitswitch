@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         
-        ApiResponse<Map<String, String>> response = new ApiResponse<>(false, "Validation failed", errors);
+        ApiResponse<Map<String, String>> response = new ApiResponse<>(false, "Please correct the highlighted fields.", errors);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 

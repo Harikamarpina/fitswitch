@@ -19,29 +19,43 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+    }
   };
 
   const validate = () => {
     if (!form.fullName.trim()) return "Full name is required";
     if (!form.email.trim()) return "Email is required";
     if (!form.password.trim()) return "Password is required";
-    if (form.password.length < 6) return "Password must be at least 6 characters";
+    if (form.password.length < 8) return "Password must be at least 8 characters";
+    const normalizedMobile = form.mobile.replace(/\D/g, "");
+    if (form.mobile.trim() && normalizedMobile.length !== 10) {
+      return "Enter a 10-digit mobile number";
+    }
     return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
 
     const msg = validate();
     if (msg) return setError(msg);
 
     try {
       setLoading(true);
-      const res = await registerUser(form);
+      const normalizedMobile = form.mobile.replace(/\D/g, "");
+      const payload = {
+        ...form,
+        mobile: normalizedMobile.length ? normalizedMobile : ""
+      };
+      const res = await registerUser(payload);
 
       // Check if registration was successful
       if (!res.data.success) {
@@ -52,11 +66,18 @@ export default function Register() {
       // navigate to otp screen with email
       navigate("/verify-otp", { state: { email: form.email } });
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        "Registration failed";
-      setError(msg);
+      const api = err?.response?.data;
+      if (api?.data && typeof api.data === "object") {
+        setFieldErrors(api.data);
+        const firstFieldError = Object.values(api.data).find(Boolean);
+        setError(firstFieldError || api.message || "Please correct the highlighted fields.");
+      } else {
+        const msg =
+          api?.message ||
+          err?.response?.data ||
+          "Registration failed";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,6 +106,7 @@ export default function Register() {
             value={form.fullName}
             onChange={handleChange}
             placeholder="John Doe"
+            error={fieldErrors.fullName}
           />
           <Input
             label="Email Address"
@@ -93,6 +115,7 @@ export default function Register() {
             value={form.email}
             onChange={handleChange}
             placeholder="name@example.com"
+            error={fieldErrors.email}
           />
           <Input
             label="Mobile Number (Optional)"
@@ -100,6 +123,7 @@ export default function Register() {
             value={form.mobile}
             onChange={handleChange}
             placeholder="+91 98765 43210"
+            error={fieldErrors.mobile}
           />
           
           <div className="space-y-1.5">
@@ -167,7 +191,7 @@ export default function Register() {
   );
 }
 
-function Input({ label, ...props }) {
+function Input({ label, error, ...props }) {
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-zinc-400 ml-1">{label}</label>
@@ -175,6 +199,7 @@ function Input({ label, ...props }) {
         {...props}
         className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all placeholder:text-zinc-600"
       />
+      {error && <p className="text-xs text-red-400 ml-1">{error}</p>}
     </div>
   );
 }

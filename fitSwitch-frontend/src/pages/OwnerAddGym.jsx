@@ -76,8 +76,8 @@ export default function OwnerAddGym() {
           className="space-y-8 bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-10 backdrop-blur-sm shadow-2xl shadow-black/40"
         >
           <div className="grid gap-6">
-            <Input label="Gym Name" name="gymName" value={form.gymName} onChange={handleChange} placeholder="e.g. Iron Paradise Elite" />
-            <Input label="Full Address" name="address" value={form.address} onChange={handleChange} placeholder="Street name, building..." />
+            <Input label="Gym Name" name="gymName" value={form.gymName} onChange={handleChange} placeholder="e.g. Iron Paradise Elite" required />
+            <Input label="Full Address" name="address" value={form.address} onChange={handleChange} placeholder="Street name, building..." required />
             
             <div className="grid md:grid-cols-2 gap-6">
               <Input label="City" name="city" value={form.city} onChange={handleChange} placeholder="e.g. Mumbai" />
@@ -85,18 +85,18 @@ export default function OwnerAddGym() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Pincode" name="pincode" value={form.pincode} onChange={handleChange} placeholder="6-digit code" />
-              <Input label="Contact Number" name="contactNumber" value={form.contactNumber} onChange={handleChange} placeholder="+91 ..." />
+              <Input label="Pincode" name="pincode" value={form.pincode} onChange={handleChange} placeholder="6-digit code" pattern="\\d{6}" />
+              <Input label="Contact Number" name="contactNumber" value={form.contactNumber} onChange={handleChange} placeholder="10-digit number" pattern="\\d{10}" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Latitude" name="latitude" value={form.latitude} onChange={handleChange} placeholder="Optional" />
-              <Input label="Longitude" name="longitude" value={form.longitude} onChange={handleChange} placeholder="Optional" />
+              <Input label="Latitude" name="latitude" value={form.latitude} onChange={handleChange} placeholder="Optional" type="number" step="0.000001" min="-90" max="90" />
+              <Input label="Longitude" name="longitude" value={form.longitude} onChange={handleChange} placeholder="Optional" type="number" step="0.000001" min="-180" max="180" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Opening Time" name="openTime" value={form.openTime} onChange={handleChange} placeholder="e.g. 06:00 AM" />
-              <Input label="Closing Time" name="closeTime" value={form.closeTime} onChange={handleChange} placeholder="e.g. 10:00 PM" />
+              <Input label="Opening Time" name="openTime" value={form.openTime} onChange={handleChange} placeholder="HH:mm" type="time" />
+              <Input label="Closing Time" name="closeTime" value={form.closeTime} onChange={handleChange} placeholder="HH:mm" type="time" />
             </div>
           </div>
 

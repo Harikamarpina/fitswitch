@@ -38,7 +38,7 @@ public class OwnerGymFacilityController {
 
     @PutMapping("/{facilityId}")
     public GymFacilityResponse updateFacility(@PathVariable Long facilityId,
-                                              @RequestBody GymFacilityUpdateRequest request,
+                                              @Valid @RequestBody GymFacilityUpdateRequest request,
                                               Authentication auth) {
         return facilityService.updateFacility(getOwnerId(auth), facilityId, request);
     }

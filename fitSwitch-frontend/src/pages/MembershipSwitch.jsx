@@ -47,7 +47,12 @@ export default function MembershipSwitch() {
     setConfirmChecked(false);
     try {
       const response = await axiosInstance.get(`/gyms/${gym.id}/plans`);
-      setGymPlans(response.data || []);
+      const activePlanIds = memberships
+        .filter(m => m.status === "ACTIVE")
+        .map(m => m.planId)
+        .filter(Boolean);
+      const availablePlans = (response.data || []).filter(plan => !activePlanIds.includes(plan.id));
+      setGymPlans(availablePlans);
     } catch (err) {
       setError("Failed to load gym plans");
     }

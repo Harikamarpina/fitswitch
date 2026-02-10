@@ -13,7 +13,7 @@ public class RegisterRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    @Pattern(regexp = "^[0-9]{10}$", message = "Mobile number must contain exactly 10 digits")
+    @Pattern(regexp = "^(\\d{10})?$", message = "Enter a 10-digit mobile number")
     private String mobile;
 
     @NotBlank(message = "Password is required")

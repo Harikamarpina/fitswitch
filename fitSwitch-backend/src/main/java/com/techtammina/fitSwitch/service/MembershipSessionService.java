@@ -2,6 +2,7 @@ package com.techtammina.fitSwitch.service;
 
 import com.techtammina.fitSwitch.dto.ActiveMembershipSessionResponse;
 import com.techtammina.fitSwitch.dto.MembershipSessionResponse;
+import com.techtammina.fitSwitch.entity.FacilitySession;
 import com.techtammina.fitSwitch.entity.GymMembershipSession;
 import com.techtammina.fitSwitch.entity.Membership;
 import com.techtammina.fitSwitch.entity.MembershipStatus;
@@ -9,6 +10,7 @@ import com.techtammina.fitSwitch.repository.GymPlanRepository;
 import com.techtammina.fitSwitch.repository.GymRepository;
 import com.techtammina.fitSwitch.repository.GymMembershipSessionRepository;
 import com.techtammina.fitSwitch.repository.MembershipRepository;
+import com.techtammina.fitSwitch.repository.FacilitySessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,15 +25,18 @@ public class MembershipSessionService {
     private final MembershipRepository membershipRepository;
     private final GymRepository gymRepository;
     private final GymPlanRepository gymPlanRepository;
+    private final FacilitySessionRepository facilitySessionRepository;
 
     public MembershipSessionService(GymMembershipSessionRepository sessionRepository,
                                     MembershipRepository membershipRepository,
                                     GymRepository gymRepository,
-                                    GymPlanRepository gymPlanRepository) {
+                                    GymPlanRepository gymPlanRepository,
+                                    FacilitySessionRepository facilitySessionRepository) {
         this.sessionRepository = sessionRepository;
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
         this.gymPlanRepository = gymPlanRepository;
+        this.facilitySessionRepository = facilitySessionRepository;
     }
 
     public MembershipSessionResponse checkIn(Long userId, Long membershipId) {
@@ -52,6 +57,16 @@ public class MembershipSessionService {
         if (existing.isPresent()) {
             throw new RuntimeException("You already have an active session for this membership today");
         }
+
+        // Prevent simultaneous check-in across different gyms
+        facilitySessionRepository.findByUserIdAndStatus(userId, FacilitySession.SessionStatus.ACTIVE)
+                .stream()
+                .findFirst()
+                .ifPresent(activeFacilitySession -> {
+                    if (!activeFacilitySession.getGymId().equals(membership.getGymId())) {
+                        throw new RuntimeException("Both check-ins cannot be active at the same time unless they belong to the same gym");
+                    }
+                });
 
         GymMembershipSession session = new GymMembershipSession();
         session.setUserId(userId);

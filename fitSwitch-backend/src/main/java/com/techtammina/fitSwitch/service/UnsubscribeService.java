@@ -26,8 +26,8 @@ public class UnsubscribeService {
     private final OwnerEarningRepository ownerEarningRepository;
     private final EmailService emailService;
 
-    private static final BigDecimal USER_REFUND_RATE = new BigDecimal("0.40");
-    private static final BigDecimal OWNER_SHARE_RATE = new BigDecimal("0.60");
+    private static final BigDecimal USER_REFUND_RATE = new BigDecimal("0.70");
+    private static final BigDecimal OWNER_SHARE_RATE = new BigDecimal("0.30");
 
     public UnsubscribeService(UnsubscribeRequestRepository unsubscribeRequestRepository,
                             MembershipRepository membershipRepository,

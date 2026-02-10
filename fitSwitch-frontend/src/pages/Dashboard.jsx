@@ -4,6 +4,7 @@ import { getOwnerGyms } from "../api/gymApi";
 import { getUserProfile } from "../api/authApi";
 import { getWalletBalance } from "../api/walletApi";
 import { getActiveMembershipSessions, getActiveFacilitySessions } from "../api/sessionApi";
+import { getOwnerUnsubscribeRequests } from "../api/unsubscribeApi";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -14,6 +15,11 @@ export default function Dashboard() {
   const [showWalletAlert, setShowWalletAlert] = useState(false);
   const [membershipEntries, setMembershipEntries] = useState([]);
   const [facilityEntries, setFacilityEntries] = useState([]);
+  const [unsubscribeRequests, setUnsubscribeRequests] = useState([]);
+  const [dismissedRequests, setDismissedRequests] = useState(() => {
+    const saved = localStorage.getItem('dismissedOwnerRequests');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
@@ -23,6 +29,7 @@ export default function Dashboard() {
     if (role === "OWNER") {
       fetchOwnerGyms();
       fetchWalletBalance();
+      fetchUnsubscribeRequests();
     }
     if (role === "USER") {
       fetchActiveEntries();
@@ -85,6 +92,27 @@ export default function Dashboard() {
     }
   };
 
+  const fetchUnsubscribeRequests = async () => {
+    try {
+      const response = await getOwnerUnsubscribeRequests();
+      setUnsubscribeRequests(response.data || response || []);
+    } catch (error) {
+      console.error("Failed to fetch unsubscribe requests:", error);
+    }
+  };
+
+  const handleDismissRequest = (requestId) => {
+    setDismissedRequests(prev => {
+      const updated = new Set([...prev, requestId]);
+      localStorage.setItem('dismissedOwnerRequests', JSON.stringify([...updated]));
+      return updated;
+    });
+  };
+
+  const pendingRequests = unsubscribeRequests.filter(
+    request => request.status === 'PENDING' && !dismissedRequests.has(request.id)
+  );
+
   const logout = () => {
     localStorage.clear();
     navigate("/login");
@@ -117,6 +145,80 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
+        {/* Pending Unsubscribe Requests for Owners */}
+        {role === "OWNER" && pendingRequests.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-4 mb-6">
+              <h2 className="text-xl font-bold">Pending Cancellation Requests</h2>
+              <div className="h-px flex-1 bg-zinc-800"></div>
+            </div>
+            <div className="space-y-4">
+              {pendingRequests.map((request) => (
+                <div key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 hover:bg-zinc-900/60 transition-all backdrop-blur-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl text-amber-400 bg-amber-400/10 border-amber-400/20">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">New Cancellation Request</h3>
+                        <p className="text-sm text-zinc-400">{request.userName} wants to cancel their membership</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border text-amber-400 bg-amber-400/10 border-amber-400/20">
+                        PENDING
+                      </span>
+                      <button
+                        onClick={() => handleDismissRequest(request.id)}
+                        className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Gym</span>
+                      <span className="text-zinc-300 font-medium">{request.gymName}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Plan</span>
+                      <span className="text-zinc-300 font-medium">{request.planName}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Requested</span>
+                      <span className="text-zinc-300 font-medium">
+                        {new Date(request.requestDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </span>
+                    </div>
+                    {request.refundAmount && (
+                      <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                        <span className="text-zinc-500">Refund Amount (70%)</span>
+                        <span className="text-amber-400 font-bold">₹{request.refundAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate("/owner/unsubscribe-requests")}
+                    className="w-full py-3 rounded-xl bg-lime-500 text-black font-bold hover:bg-lime-400 transition-colors"
+                  >
+                    Review Request
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Wallet Balance Alert for Owners */}
         {role === "OWNER" && showWalletAlert && walletBalance !== null && walletBalance < 0 && (

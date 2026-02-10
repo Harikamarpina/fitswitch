@@ -61,9 +61,13 @@ export default function FacilityPlans() {
     navigate('/purchase-facility-plan');
   };
 
-  const hasActiveSubscription = (facilityId) => {
-    return userSubscriptions.some(sub => 
-      sub.facilityId == facilityId && sub.status === "ACTIVE"
+  const getActivePlanIds = () => {
+    const today = new Date();
+    return new Set(
+      userSubscriptions
+        .filter(sub => sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) >= today)
+        .map(sub => sub.facilityPlanId)
+        .filter(Boolean)
     );
   };
 
@@ -124,12 +128,19 @@ export default function FacilityPlans() {
           </div>
         )}
 
-        {plans.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.map((plan) => {
-              const isActive = hasActiveSubscription(plan.facilityId);
-              
-              return (
+        {plans.length > 0 && (() => {
+          const activePlanIds = getActivePlanIds();
+          const visiblePlans = plans.filter(plan => !activePlanIds.has(plan.id));
+          if (visiblePlans.length === 0) {
+            return (
+              <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] py-16 text-center">
+                <p className="text-zinc-500">You already have an active plan for this facility.</p>
+              </div>
+            );
+          }
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {visiblePlans.map((plan) => (
                 <div
                   key={plan.id}
                   className="group relative flex flex-col bg-zinc-900/40 border border-zinc-800/50 rounded-[2rem] p-8 hover:bg-zinc-900/60 hover:border-zinc-700/50 transition-all duration-300"
@@ -166,34 +177,18 @@ export default function FacilityPlans() {
 
                   <button
                     onClick={() => handleSelectPlan(plan)}
-                    disabled={isActive}
-                    className={`h-14 w-full rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                      isActive
-                        ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
-                        : "bg-lime-400 text-black hover:bg-lime-300 shadow-[0_0_20px_rgba(163,230,53,0.15)] group-hover:shadow-[0_0_30px_rgba(163,230,53,0.25)]"
-                    }`}
+                    className="h-14 w-full rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-lime-400 text-black hover:bg-lime-300 shadow-[0_0_20px_rgba(163,230,53,0.15)] group-hover:shadow-[0_0_30px_rgba(163,230,53,0.25)]"
                   >
-                    {isActive ? (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Already Subscribed
-                      </>
-                    ) : (
-                      <>
-                        Purchase Plan
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </>
-                    )}
+                    Purchase Plan
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                   </button>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

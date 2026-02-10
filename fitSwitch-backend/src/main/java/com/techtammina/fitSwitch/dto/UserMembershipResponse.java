@@ -7,6 +7,8 @@ import java.time.LocalDate;
 public class UserMembershipResponse {
 
     private Long id;
+    private Long gymId;
+    private Long planId;
     private String gymName;
     private String planName;
     private LocalDate startDate;
@@ -26,6 +28,22 @@ public class UserMembershipResponse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getGymId() {
+        return gymId;
+    }
+
+    public void setGymId(Long gymId) {
+        this.gymId = gymId;
+    }
+
+    public Long getPlanId() {
+        return planId;
+    }
+
+    public void setPlanId(Long planId) {
+        this.planId = planId;
     }
 
     public String getGymName() {

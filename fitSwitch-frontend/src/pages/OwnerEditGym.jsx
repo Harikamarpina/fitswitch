@@ -126,8 +126,8 @@ export default function OwnerEditGym() {
           className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] p-8 sm:p-10 space-y-8"
         >
           <div className="space-y-6">
-            <Input label="GYM NAME" name="gymName" value={form.gymName} onChange={handleChange} />
-            <Input label="FULL ADDRESS" name="address" value={form.address} onChange={handleChange} />
+            <Input label="GYM NAME" name="gymName" value={form.gymName} onChange={handleChange} required />
+            <Input label="FULL ADDRESS" name="address" value={form.address} onChange={handleChange} required />
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Input label="CITY" name="city" value={form.city} onChange={handleChange} />
@@ -135,18 +135,18 @@ export default function OwnerEditGym() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input label="PINCODE" name="pincode" value={form.pincode} onChange={handleChange} />
-              <Input label="CONTACT NUMBER" name="contactNumber" value={form.contactNumber} onChange={handleChange} />
+              <Input label="PINCODE" name="pincode" value={form.pincode} onChange={handleChange} pattern="\\d{6}" />
+              <Input label="CONTACT NUMBER" name="contactNumber" value={form.contactNumber} onChange={handleChange} pattern="\\d{10}" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-zinc-800/50">
-              <Input label="LATITUDE (OPTIONAL)" name="latitude" value={form.latitude} onChange={handleChange} />
-              <Input label="LONGITUDE (OPTIONAL)" name="longitude" value={form.longitude} onChange={handleChange} />
+              <Input label="LATITUDE (OPTIONAL)" name="latitude" value={form.latitude} onChange={handleChange} type="number" step="0.000001" min="-90" max="90" />
+              <Input label="LONGITUDE (OPTIONAL)" name="longitude" value={form.longitude} onChange={handleChange} type="number" step="0.000001" min="-180" max="180" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-zinc-800/50">
-              <Input label="OPENING TIME" name="openTime" value={form.openTime} onChange={handleChange} placeholder="e.g. 06:00 AM" />
-              <Input label="CLOSING TIME" name="closeTime" value={form.closeTime} onChange={handleChange} placeholder="e.g. 10:00 PM" />
+              <Input label="OPENING TIME" name="openTime" value={form.openTime} onChange={handleChange} placeholder="HH:mm" type="time" />
+              <Input label="CLOSING TIME" name="closeTime" value={form.closeTime} onChange={handleChange} placeholder="HH:mm" type="time" />
             </div>
 
             <div className="flex items-center gap-4 p-5 bg-black border border-zinc-800 rounded-2xl group transition-all hover:border-lime-400/30">

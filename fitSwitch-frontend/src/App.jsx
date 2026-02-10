@@ -273,7 +273,7 @@ export default function App() {
   />
 
   <Route
-    path="/owner/facilities/:facilityId/plans/:planId/users"
+    path="/owner/gyms/:gymId/facilities/:facilityId/plans/:planId/users"
     element={
       <ProtectedRoute allowedRoles={["OWNER"]}>
         <PlanUsers />

@@ -46,7 +46,8 @@ public class WalletTransaction {
         SUB,                 // Subscription payment
         MEMBERSHIP_REFUND,   // Refund from membership switch
         MEMBERSHIP_SWITCH,   // Payment for new membership after switch
-        OWNER_EARNING       // Owner receives payment
+        OWNER_EARNING,      // Owner receives payment
+        OWNER_REFUND        // Owner wallet debit for refunds/switches
     }
 
     // Constructors

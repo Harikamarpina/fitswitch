@@ -63,20 +63,6 @@ export default function PurchaseFacilityPlan() {
         facilityPlanId: planData.facilityPlanId
       });
       
-      // Record the transaction for earnings tracking
-      try {
-        await axiosInstance.post('/api/owner/earnings/record', {
-          type: 'FACILITY_PURCHASE',
-          amount: planData.price,
-          description: `Facility Plan: ${planData.planName} - ${planData.facilityName}`,
-          gymId: planData.gymId,
-          facilityId: planData.facilityId,
-          planId: planData.facilityPlanId
-        });
-      } catch (earningsErr) {
-        console.warn('Failed to record earnings, but subscription successful:', earningsErr);
-      }
-      
       setSuccess("Successfully subscribed to facility plan! Enjoy your sessions.");
       localStorage.removeItem('selectedFacilityPlan');
       
@@ -203,7 +189,7 @@ export default function PurchaseFacilityPlan() {
               <div className="flex justify-between items-center pt-6 border-t border-zinc-800/50">
                 <div className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Wallet Balance</div>
                 <div className="text-lg font-bold text-white">
-                  {walletLoading ? "Loading..." : `â‚¹${walletBalance?.toFixed?.(0) ?? "0"}`}
+                  {walletLoading ? "Loading..." : `₹${walletBalance?.toFixed?.(0) ?? "0"}`}
                 </div>
               </div>
               
@@ -223,7 +209,7 @@ export default function PurchaseFacilityPlan() {
                       onClick={() => setShowAddMoney(true)}
                       className="text-lime-400 font-bold hover:text-lime-300"
                     >
-                      Top up wallet â†’
+                      Top up wallet →
                     </button>
                   </div>
                 </div>
@@ -240,10 +226,13 @@ export default function PurchaseFacilityPlan() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => navigate('/gyms')}
-                    className="h-14 bg-zinc-800 text-white font-bold rounded-2xl hover:bg-zinc-700 active:scale-[0.98] transition-all flex items-center justify-center"
+                    onClick={() => navigate('/digital-card')}
+                    className="h-14 bg-zinc-800 text-white font-bold rounded-2xl hover:bg-zinc-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
-                    Continue Browsing
+                    View Digital Card
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
                   </button>
                 </div>
               ) : (
@@ -295,7 +284,7 @@ export default function PurchaseFacilityPlan() {
                     Amount (INR)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">â‚¹</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">₹</span>
                     <input
                       type="number"
                       step="0.01"

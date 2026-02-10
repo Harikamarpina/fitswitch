@@ -18,30 +18,30 @@ public class MembershipSwitchService {
     private final MembershipRepository membershipRepository;
     private final GymRepository gymRepository;
     private final GymPlanRepository planRepository;
+    private final GymMembershipSessionRepository gymMembershipSessionRepository;
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
     private final OwnerEarningRepository ownerEarningRepository;
-    private final UnsubscribeRequestRepository unsubscribeRequestRepository;
+    private final UserRepository userRepository;
     private final EmailService emailService;
-
-    private static final BigDecimal USER_REFUND_RATE = new BigDecimal("0.40");
-    private static final BigDecimal OWNER_SHARE_RATE = new BigDecimal("0.60");
 
     public MembershipSwitchService(MembershipRepository membershipRepository,
                                  GymRepository gymRepository,
                                  GymPlanRepository planRepository,
+                                 GymMembershipSessionRepository gymMembershipSessionRepository,
                                  UserWalletRepository walletRepository,
                                  WalletTransactionRepository transactionRepository,
                                  OwnerEarningRepository ownerEarningRepository,
-                                 UnsubscribeRequestRepository unsubscribeRequestRepository,
+                                 UserRepository userRepository,
                                  EmailService emailService) {
         this.membershipRepository = membershipRepository;
         this.gymRepository = gymRepository;
         this.planRepository = planRepository;
+        this.gymMembershipSessionRepository = gymMembershipSessionRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.ownerEarningRepository = ownerEarningRepository;
-        this.unsubscribeRequestRepository = unsubscribeRequestRepository;
+        this.userRepository = userRepository;
         this.emailService = emailService;
     }
 
@@ -88,15 +88,27 @@ public class MembershipSwitchService {
 
         // HYBRID pass holders can switch to any gym
 
-        // Calculate refund and usage
+        // Calculate refund and usage based on attendance
         MembershipCalculation calculation = calculateMembershipSwitch(currentMembership, newPlan);
 
         // Get or create wallet
         UserWallet wallet = walletRepository.findByUserId(userId)
                 .orElseGet(() -> createWallet(userId));
 
-        // Process old membership and create refund request
-        processOldMembership(currentMembership, calculation);
+        UserWallet oldOwnerWallet = walletRepository.findByUserId(currentGym.getOwnerId())
+                .orElseGet(() -> createWallet(currentGym.getOwnerId()));
+
+        if (oldOwnerWallet.getBalance().compareTo(calculation.getRemainingAmount()) < 0) {
+            throw new RuntimeException("Current gym owner has insufficient balance to process the switch. Please try again later.");
+        }
+
+        if (wallet.getBalance().add(calculation.getRemainingAmount()).compareTo(calculation.getNewPlanPrice()) < 0) {
+            throw new RuntimeException("Insufficient wallet balance for membership switch");
+        }
+
+        // Process old membership and remaining balance transfer
+        processOldMembership(currentMembership);
+        processRemainingBalanceTransfer(currentMembership, currentGym, oldOwnerWallet, wallet, calculation);
 
         // Create new membership
         Membership newMembership = createNewMembership(userId, request.getNewGymId(), 
@@ -108,19 +120,16 @@ public class MembershipSwitchService {
         // Send email notification
         sendSwitchNotification(userId, currentMembership, newMembership, calculation);
 
-        return new ApiResponse(true, "Switch request submitted");
+        return new ApiResponse(true, "Membership switched successfully");
     }
 
     private MembershipCalculation calculateMembershipSwitch(Membership currentMembership, GymPlan newPlan) {
-        LocalDate today = LocalDate.now();
-        
-        // Calculate days used and remaining
+        // Calculate days used based on attendance
         long totalDays = ChronoUnit.DAYS.between(currentMembership.getStartDate(), currentMembership.getEndDate());
-        long daysUsed = ChronoUnit.DAYS.between(currentMembership.getStartDate(), today);
-        long daysRemaining = ChronoUnit.DAYS.between(today, currentMembership.getEndDate());
-        
-        if (daysRemaining < 0) daysRemaining = 0;
-        if (daysUsed < 0) daysUsed = 0;
+        if (totalDays <= 0) {
+            totalDays = Math.max(1, newPlan.getDurationDays());
+        }
+        long daysUsed = gymMembershipSessionRepository.countCompletedVisitDaysByMembershipId(currentMembership.getId());
 
         // Get current plan price
         GymPlan currentPlan = planRepository.findById(currentMembership.getPlanId()).orElse(null);
@@ -128,67 +137,40 @@ public class MembershipSwitchService {
 
         // Calculate per-day cost
         BigDecimal perDayCost = currentPlanPrice.divide(BigDecimal.valueOf(totalDays), 2, RoundingMode.HALF_UP);
-        
+
         // Calculate amounts
         BigDecimal usedAmount = perDayCost.multiply(BigDecimal.valueOf(daysUsed));
-        BigDecimal remainingAmount = perDayCost.multiply(BigDecimal.valueOf(daysRemaining));
-        BigDecimal refundAmount = remainingAmount.multiply(USER_REFUND_RATE).setScale(2, RoundingMode.HALF_UP);
-        
-        // Calculate remaining amount needed for new plan
-        BigDecimal additionalAmount = newPlan.getPrice();
+        if (usedAmount.compareTo(currentPlanPrice) > 0) {
+            usedAmount = currentPlanPrice;
+        }
+        BigDecimal remainingAmount = currentPlanPrice.subtract(usedAmount).setScale(2, RoundingMode.HALF_UP);
+        if (remainingAmount.compareTo(BigDecimal.ZERO) < 0) {
+            remainingAmount = BigDecimal.ZERO;
+        }
+
+        BigDecimal creditToNewPlan = remainingAmount.min(newPlan.getPrice());
+        BigDecimal additionalAmount = newPlan.getPrice().subtract(creditToNewPlan).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal extraCredit = remainingAmount.subtract(creditToNewPlan).setScale(2, RoundingMode.HALF_UP);
 
         MembershipCalculation calculation = new MembershipCalculation();
         calculation.setTotalDays(totalDays);
         calculation.setDaysUsed(daysUsed);
-        calculation.setDaysRemaining(daysRemaining);
         calculation.setCurrentPlanPrice(currentPlanPrice);
         calculation.setNewPlanPrice(newPlan.getPrice());
         calculation.setPerDayCost(perDayCost);
         calculation.setUsedAmount(usedAmount);
-        calculation.setRefundAmount(refundAmount);
+        calculation.setRemainingAmount(remainingAmount);
+        calculation.setCreditToNewPlan(creditToNewPlan);
+        calculation.setExtraCredit(extraCredit);
         calculation.setAdditionalAmount(additionalAmount);
         
         return calculation;
     }
 
-    private void processOldMembership(Membership currentMembership, MembershipCalculation calculation) {
+    private void processOldMembership(Membership currentMembership) {
         // Mark old membership as switched
         currentMembership.setStatus(MembershipStatus.SWITCHED);
         membershipRepository.save(currentMembership);
-
-        // Create unsubscribe request for refund approval
-        unsubscribeRequestRepository.findByMembershipIdAndStatus(
-                currentMembership.getId(), UnsubscribeRequest.RequestStatus.PENDING)
-                .ifPresent(existing -> {
-                    throw new RuntimeException("Unsubscribe request already pending for this membership");
-                });
-
-        Gym currentGym = gymRepository.findById(currentMembership.getGymId())
-                .orElseThrow(() -> new RuntimeException("Current gym not found"));
-        GymPlan currentPlan = planRepository.findById(currentMembership.getPlanId())
-                .orElseThrow(() -> new RuntimeException("Current plan not found"));
-
-        BigDecimal remainingAmount = calculation.getRefundAmount()
-                .divide(USER_REFUND_RATE, 2, RoundingMode.HALF_UP);
-        BigDecimal ownerShare = remainingAmount.multiply(OWNER_SHARE_RATE)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        int monthsUsed = (int) Math.ceil((double) calculation.getDaysUsed() / 30.0);
-
-        UnsubscribeRequest request = new UnsubscribeRequest();
-        request.setUserId(currentMembership.getUserId());
-        request.setMembershipId(currentMembership.getId());
-        request.setGymId(currentMembership.getGymId());
-        request.setOwnerId(currentGym.getOwnerId());
-        request.setStatus(UnsubscribeRequest.RequestStatus.PENDING);
-        request.setRequestDate(LocalDateTime.now());
-        request.setRefundAmount(calculation.getRefundAmount());
-        request.setRemainingAmount(remainingAmount);
-        request.setOwnerShare(ownerShare);
-        request.setUsedMonths(monthsUsed);
-        request.setTotalMonths(currentPlan.getDurationMonths());
-        request.setReason("Switching gyms");
-        unsubscribeRequestRepository.save(request);
     }
 
     private Membership createNewMembership(Long userId, Long newGymId, Long newPlanId, GymPlan newPlan, MembershipCalculation calculation) {
@@ -204,31 +186,75 @@ public class MembershipSwitchService {
         return membershipRepository.save(newMembership);
     }
 
-    private void processNewMembershipPayment(Membership newMembership, Gym newGym, MembershipCalculation calculation, UserWallet wallet) {
-        // Check if additional payment needed
-        if (calculation.getAdditionalAmount().compareTo(BigDecimal.ZERO) > 0) {
-            // Check wallet balance
-            if (wallet.getBalance().compareTo(calculation.getAdditionalAmount()) < 0) {
-                throw new RuntimeException("Insufficient wallet balance for membership switch");
-            }
-
-            // Debit wallet
-            wallet.setBalance(wallet.getBalance().subtract(calculation.getAdditionalAmount()));
-            walletRepository.save(wallet);
-
-            // Create payment transaction
-            WalletTransaction paymentTransaction = new WalletTransaction();
-            paymentTransaction.setUserId(newMembership.getUserId());
-            paymentTransaction.setWalletId(wallet.getId());
-            paymentTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_SWITCH);
-            paymentTransaction.setAmount(calculation.getAdditionalAmount().negate());
-            paymentTransaction.setBalanceAfter(wallet.getBalance());
-            paymentTransaction.setDescription("Payment for new membership");
-            paymentTransaction.setMembershipId(newMembership.getId());
-            paymentTransaction.setGymId(newMembership.getGymId());
-            paymentTransaction.setCreatedAt(LocalDateTime.now());
-            transactionRepository.save(paymentTransaction);
+    private void processRemainingBalanceTransfer(Membership currentMembership,
+                                                 Gym currentGym,
+                                                 UserWallet oldOwnerWallet,
+                                                 UserWallet userWallet,
+                                                 MembershipCalculation calculation) {
+        if (calculation.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
         }
+
+        // Debit old owner wallet
+        oldOwnerWallet.setBalance(oldOwnerWallet.getBalance().subtract(calculation.getRemainingAmount()));
+        UserWallet savedOldOwnerWallet = walletRepository.save(oldOwnerWallet);
+
+        WalletTransaction ownerDebit = new WalletTransaction();
+        ownerDebit.setUserId(currentGym.getOwnerId());
+        ownerDebit.setWalletId(savedOldOwnerWallet.getId());
+        ownerDebit.setType(WalletTransaction.TransactionType.OWNER_REFUND);
+        ownerDebit.setAmount(calculation.getRemainingAmount().negate());
+        ownerDebit.setBalanceAfter(savedOldOwnerWallet.getBalance());
+        ownerDebit.setDescription("Owner refund for membership switch");
+        ownerDebit.setGymId(currentMembership.getGymId());
+        ownerDebit.setMembershipId(currentMembership.getId());
+        ownerDebit.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerDebit);
+
+        OwnerEarning refundEarning = new OwnerEarning();
+        refundEarning.setOwnerId(currentGym.getOwnerId());
+        refundEarning.setGymId(currentMembership.getGymId());
+        refundEarning.setUserId(currentMembership.getUserId());
+        refundEarning.setType(OwnerEarning.EarningType.MEMBERSHIP_REFUND);
+        refundEarning.setAmount(calculation.getRemainingAmount());
+        refundEarning.setDescription("Membership switch refund to user");
+        refundEarning.setMembershipId(currentMembership.getId());
+        refundEarning.setCreatedAt(LocalDateTime.now());
+        ownerEarningRepository.save(refundEarning);
+
+        // Credit user wallet
+        userWallet.setBalance(userWallet.getBalance().add(calculation.getRemainingAmount()));
+        walletRepository.save(userWallet);
+
+        WalletTransaction refundTxn = new WalletTransaction();
+        refundTxn.setUserId(currentMembership.getUserId());
+        refundTxn.setWalletId(userWallet.getId());
+        refundTxn.setType(WalletTransaction.TransactionType.MEMBERSHIP_REFUND);
+        refundTxn.setAmount(calculation.getRemainingAmount());
+        refundTxn.setBalanceAfter(userWallet.getBalance());
+        refundTxn.setDescription("Remaining balance credited from membership switch");
+        refundTxn.setGymId(currentMembership.getGymId());
+        refundTxn.setMembershipId(currentMembership.getId());
+        refundTxn.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(refundTxn);
+    }
+
+    private void processNewMembershipPayment(Membership newMembership, Gym newGym, MembershipCalculation calculation, UserWallet wallet) {
+        // Debit wallet for full new plan price
+        wallet.setBalance(wallet.getBalance().subtract(calculation.getNewPlanPrice()));
+        walletRepository.save(wallet);
+
+        WalletTransaction paymentTransaction = new WalletTransaction();
+        paymentTransaction.setUserId(newMembership.getUserId());
+        paymentTransaction.setWalletId(wallet.getId());
+        paymentTransaction.setType(WalletTransaction.TransactionType.MEMBERSHIP_SWITCH);
+        paymentTransaction.setAmount(calculation.getNewPlanPrice().negate());
+        paymentTransaction.setBalanceAfter(wallet.getBalance());
+        paymentTransaction.setDescription("Payment for new membership");
+        paymentTransaction.setMembershipId(newMembership.getId());
+        paymentTransaction.setGymId(newMembership.getGymId());
+        paymentTransaction.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(paymentTransaction);
 
         // Record owner earning for new membership
         OwnerEarning earning = new OwnerEarning();
@@ -241,11 +267,42 @@ public class MembershipSwitchService {
         earning.setMembershipId(newMembership.getId());
         earning.setCreatedAt(LocalDateTime.now());
         ownerEarningRepository.save(earning);
+
+        // Credit new gym owner wallet
+        UserWallet newOwnerWallet = walletRepository.findByUserId(newGym.getOwnerId())
+                .orElseGet(() -> createWallet(newGym.getOwnerId()));
+        newOwnerWallet.setBalance(newOwnerWallet.getBalance().add(calculation.getNewPlanPrice()));
+        UserWallet savedOwnerWallet = walletRepository.save(newOwnerWallet);
+
+        WalletTransaction ownerWalletTxn = new WalletTransaction();
+        ownerWalletTxn.setUserId(newGym.getOwnerId());
+        ownerWalletTxn.setWalletId(savedOwnerWallet.getId());
+        ownerWalletTxn.setType(WalletTransaction.TransactionType.OWNER_EARNING);
+        ownerWalletTxn.setAmount(calculation.getNewPlanPrice());
+        ownerWalletTxn.setBalanceAfter(savedOwnerWallet.getBalance());
+        ownerWalletTxn.setDescription("Owner earning: membership switch");
+        ownerWalletTxn.setGymId(newMembership.getGymId());
+        ownerWalletTxn.setMembershipId(newMembership.getId());
+        ownerWalletTxn.setCreatedAt(LocalDateTime.now());
+        transactionRepository.save(ownerWalletTxn);
     }
 
     private void sendSwitchNotification(Long userId, Membership oldMembership, Membership newMembership, MembershipCalculation calculation) {
-        // Implementation for email notification
-        // This would integrate with the existing EmailService
+        userRepository.findById(userId).ifPresent(user -> {
+            Gym gym = gymRepository.findById(newMembership.getGymId()).orElse(null);
+            GymPlan plan = planRepository.findById(newMembership.getPlanId()).orElse(null);
+            String gymName = gym != null ? gym.getGymName() : "Your New Gym";
+            String planName = plan != null ? plan.getPlanName() : "New Plan";
+
+            emailService.sendMembershipConfirmation(
+                    user.getEmail(),
+                    gymName,
+                    planName,
+                    newMembership.getStartDate(),
+                    newMembership.getEndDate(),
+                    calculation.getNewPlanPrice()
+            );
+        });
     }
 
     private UserWallet createWallet(Long userId) {
@@ -257,12 +314,13 @@ public class MembershipSwitchService {
     private static class MembershipCalculation {
         private long totalDays;
         private long daysUsed;
-        private long daysRemaining;
         private BigDecimal currentPlanPrice;
         private BigDecimal newPlanPrice;
         private BigDecimal perDayCost;
         private BigDecimal usedAmount;
-        private BigDecimal refundAmount;
+        private BigDecimal remainingAmount;
+        private BigDecimal creditToNewPlan;
+        private BigDecimal extraCredit;
         private BigDecimal additionalAmount;
 
         // Getters and setters
@@ -271,9 +329,6 @@ public class MembershipSwitchService {
 
         public long getDaysUsed() { return daysUsed; }
         public void setDaysUsed(long daysUsed) { this.daysUsed = daysUsed; }
-
-        public long getDaysRemaining() { return daysRemaining; }
-        public void setDaysRemaining(long daysRemaining) { this.daysRemaining = daysRemaining; }
 
         public BigDecimal getCurrentPlanPrice() { return currentPlanPrice; }
         public void setCurrentPlanPrice(BigDecimal currentPlanPrice) { this.currentPlanPrice = currentPlanPrice; }
@@ -287,8 +342,14 @@ public class MembershipSwitchService {
         public BigDecimal getUsedAmount() { return usedAmount; }
         public void setUsedAmount(BigDecimal usedAmount) { this.usedAmount = usedAmount; }
 
-        public BigDecimal getRefundAmount() { return refundAmount; }
-        public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+        public BigDecimal getRemainingAmount() { return remainingAmount; }
+        public void setRemainingAmount(BigDecimal remainingAmount) { this.remainingAmount = remainingAmount; }
+
+        public BigDecimal getCreditToNewPlan() { return creditToNewPlan; }
+        public void setCreditToNewPlan(BigDecimal creditToNewPlan) { this.creditToNewPlan = creditToNewPlan; }
+
+        public BigDecimal getExtraCredit() { return extraCredit; }
+        public void setExtraCredit(BigDecimal extraCredit) { this.extraCredit = extraCredit; }
 
         public BigDecimal getAdditionalAmount() { return additionalAmount; }
         public void setAdditionalAmount(BigDecimal additionalAmount) { this.additionalAmount = additionalAmount; }
